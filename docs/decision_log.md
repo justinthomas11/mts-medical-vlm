@@ -98,3 +98,50 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
   1. Predicting Impression only: Rejected because Findings contain fine-grained spatial and anatomical observations essential for RAG grounding and Grad-CAM alignment.
   2. Predicting Findings only: Rejected because Impression contains the actionable clinical conclusion.
 - Justification: Joint Findings + Impression captures complete radiologist reasoning and aligns with standard clinical report generation benchmarks.
+
+---
+
+## Decision Record 009: Repository Restructuring to Workspace Root
+- Date: 2026-09-20
+- Status: Accepted
+- Context: Nested directory `trustworthy-cxr-vlm` caused Git root confusion with the parent Windows user profile and Git submodule indexing conflicts.
+- Decision: Flatten all project directories (`configs/`, `data/`, `docs/`, `reports/`, `src/`, `tests/`) directly to the workspace root `TrustMedicalVLM` mapped directly to GitHub repository `mts-medical-vlm`.
+- Alternatives Considered:
+  1. Keeping nested `trustworthy-cxr-vlm/` subfolder: Rejected due to redundant directory paths and remote submodule push errors.
+- Justification: Standardizes clean repository root access for automated testing, relative config path resolution, and GitHub synchronization.
+
+---
+
+## Decision Record 010: Handling Empty and Partial Report Sections
+- Date: 2026-09-20
+- Status: Accepted
+- Context: Data audit identified 514 reports lacking Findings, 31 lacking Impression, and 25 lacking both sections.
+- Decision: For reports with missing Findings but valid Impression, set target text to Impression. For reports with missing Impression but valid Findings, set target text to Findings. Mark reports with both sections empty (23 records after stripping whitespace) as `is_valid_target = False` and assign to split `excluded_empty_target`.
+- Alternatives Considered:
+  1. Dropping all 514 reports lacking Findings: Rejected because 489 of those reports possess clear diagnostic impressions that are clinically informative.
+  2. Imputing missing findings with synthetic text: Rejected to avoid fabricating ground truth observations.
+- Justification: Maximizes usable patient cohort (3,666 benchmark patients) while strictly preventing empty target supervision.
+
+---
+
+## Decision Record 011: Multi-Label Pathology Extraction Rules and Negation Filtering
+- Date: 2026-09-20
+- Status: Accepted
+- Context: IU X-Ray lacks native gold multi-label binary indicators for standard thoracic diseases.
+- Decision: Implement rule-based clinical regular expressions covering 14 CheXpert/NIH thoracic pathologies, coupled with a 50-character backward-looking negation window and concept corroboration against `Problems` and `MeSH` fields.
+- Alternatives Considered:
+  1. CheXbert deep learning model inference: Parked for local preprocessing to avoid heavy model downloads prior to user confirmation; the rule-based extractor provides deterministic, reproducible labels.
+  2. Unsupervised keyword extraction: Rejected due to failure to capture negation ("no pneumothorax").
+- Justification: Ensures accurate, deterministic multi-label assignment across all 3,851 patients with zero GPU overhead.
+
+---
+
+## Decision Record 012: Cryptographic Manifest and File Integrity Tracking
+- Date: 2026-09-20
+- Status: Accepted
+- Context: Medical imaging research requires verifiable reproducibility of raw-to-processed asset linkages.
+- Decision: Calculate SHA256 cryptographic hashes for every primary diagnostic image linked to train, val, test, and excluded partitions, saving the structured index in `data/processed/splits_manifest.json`.
+- Alternatives Considered:
+  1. Plain CSV mapping without hashes: Rejected because silent file modification or corruption cannot be detected.
+- Justification: Guarantees strict cryptographic auditability for publication and external validation.
+

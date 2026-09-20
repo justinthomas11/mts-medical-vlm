@@ -1,0 +1,170 @@
+{
+  "reports": {
+    "total_rows": 3851,
+    "columns": [
+      "uid",
+      "MeSH",
+      "Problems",
+      "image",
+      "indication",
+      "comparison",
+      "findings",
+      "impression"
+    ],
+    "dtypes": {
+      "uid": "int64",
+      "MeSH": "object",
+      "Problems": "object",
+      "image": "object",
+      "indication": "object",
+      "comparison": "object",
+      "findings": "object",
+      "impression": "object"
+    },
+    "missing_per_col": {
+      "uid": 0,
+      "MeSH": 0,
+      "Problems": 0,
+      "image": 0,
+      "indication": 86,
+      "comparison": 1166,
+      "findings": 514,
+      "impression": 31
+    },
+    "duplicate_rows": 0,
+    "unique_uids": 3851,
+    "duplicate_uids": 0
+  },
+  "projections": {
+    "total_rows": 7466,
+    "columns": [
+      "uid",
+      "filename",
+      "projection"
+    ],
+    "dtypes": {
+      "uid": "int64",
+      "filename": "object",
+      "projection": "object"
+    },
+    "missing_per_col": {
+      "uid": 0,
+      "filename": 0,
+      "projection": 0
+    },
+    "duplicate_rows": 0,
+    "unique_uids": 3851,
+    "duplicate_uids": 3615,
+    "unique_filenames": 7466,
+    "view_counts": {
+      "Frontal": 3818,
+      "Lateral": 3648
+    }
+  },
+  "patient_views": {
+    "images_per_patient_min": 1,
+    "images_per_patient_max": 5,
+    "images_per_patient_mean": 1.9387172163074526,
+    "images_per_patient_median": 2.0,
+    "images_per_patient_distribution": {
+      "2": 3210,
+      "1": 446,
+      "3": 181,
+      "4": 13,
+      "5": 1
+    }
+  },
+  "patient_view_availability": {
+    "both_frontal_and_lateral": 3388,
+    "frontal_only": 301,
+    "lateral_only": 162,
+    "neither_frontal_nor_lateral": 0,
+    "patients_with_no_frontal": 162
+  },
+  "image_integrity": {
+    "files_on_disk": 7470,
+    "files_in_csv": 7466,
+    "missing_from_disk_count": 0,
+    "missing_from_disk_examples": [],
+    "orphan_files_count": 4,
+    "orphan_files_examples": [
+      "2084_IM-0715-1001-0002.dcm.png",
+      "2560_IM-1064-4001.dcm.png",
+      "3809_IM-1919-1003002.dcm.png",
+      "2084_IM-0715-2001-0001.dcm.png"
+    ],
+    "corrupt_files_count": 0,
+    "corrupt_files": [],
+    "modes": {
+      "L": 7470
+    },
+    "width_min": 1529,
+    "width_max": 2891,
+    "width_mean": 2155.766532797858,
+    "height_min": 1760,
+    "height_max": 3001,
+    "height_mean": 2220.3657295850066,
+    "intensity_sample_count": 500,
+    "intensity_sample_mean": 146.2924003328628,
+    "intensity_sample_std": 26.258012312431287
+  },
+  "report_text": {
+    "findings_char_len_mean": 190.24201506102312,
+    "findings_word_len_mean": 27.255258374448196,
+    "findings_word_len_median": 27.0,
+    "findings_word_len_max": 169,
+    "impression_word_len_mean": 10.477278628927552,
+    "impression_word_len_median": 5.0,
+    "impression_word_len_max": 130,
+    "combined_word_len_mean": 37.73253700337575,
+    "combined_word_len_median": 34.0,
+    "combined_word_len_max": 230,
+    "empty_findings_count": 514,
+    "empty_impression_count": 31,
+    "both_empty_count": 25,
+    "reports_with_deid_tokens": 3052,
+    "reports_with_deid_pct": 79.25214230070111,
+    "total_deid_tokens": 7118,
+    "avg_deid_tokens_per_report": 1.8483510776421708
+  },
+  "labels": {
+    "normal_reports": 1379,
+    "abnormal_reports": 2472,
+    "normal_percentage": 35.808880810179176,
+    "abnormal_percentage": 64.19111918982082,
+    "top_15_mesh_tags": {
+      "Lung/hypoinflation": 238,
+      "Lung/hyperdistention": 159,
+      "Cardiomegaly": 139,
+      "Cardiomegaly/mild": 129,
+      "Aorta/tortuous": 118,
+      "Thoracic Vertebrae/degenerative": 114,
+      "Spine/degenerative": 109,
+      "Granulomatous Disease": 93,
+      "Atherosclerosis/aorta": 92,
+      "No Indexing": 92,
+      "Thoracic Vertebrae/degenerative/mild": 91,
+      "Technical Quality of Image Unsatisfactory": 84,
+      "Markings/bronchovascular": 67,
+      "Calcinosis/aorta": 65,
+      "Aorta, Thoracic/tortuous": 56
+    },
+    "top_15_problem_tags": {
+      "Lung": 553,
+      "Opacity": 509,
+      "Cardiomegaly": 345,
+      "Calcinosis": 332,
+      "Pulmonary Atelectasis": 330,
+      "Calcified Granuloma": 276,
+      "Thoracic Vertebrae": 256,
+      "Cicatrix": 196,
+      "Spine": 174,
+      "Markings": 167,
+      "Pleural Effusion": 160,
+      "Aorta": 158,
+      "Diaphragm": 140,
+      "Density": 129,
+      "Atherosclerosis": 125
+    }
+  }
+}

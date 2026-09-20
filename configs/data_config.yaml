@@ -1,0 +1,57 @@
+# Data Configuration for Trustworthy Medical VLM Pipeline
+
+project:
+  name: "trustworthy-cxr-vlm"
+  seed: 42
+
+paths:
+  raw_dir: "data/raw"
+  raw_reports_csv: "data/raw/indiana_reports.csv"
+  raw_projections_csv: "data/raw/indiana_projections.csv"
+  raw_images_dir: "data/raw/images/images_normalized"
+  processed_dir: "data/processed"
+  processed_master_csv: "data/processed/iu_xray_processed.csv"
+  splits_manifest_json: "data/processed/splits_manifest.json"
+  splits_summary_csv: "data/processed/splits_summary.csv"
+  label_matrix_csv: "data/processed/label_matrix.csv"
+  figures_dir: "reports/figures"
+  audit_report_md: "reports/data_audit.md"
+  data_card_md: "docs/data_card.md"
+
+view_policy:
+  primary: "Frontal" # Options: Frontal, Frontal_Lateral
+  allowed_frontal_projections: ["Frontal", "PA", "AP"]
+  keep_lateral_metadata: true
+
+splitting:
+  train_ratio: 0.70
+  val_ratio: 0.10
+  test_ratio: 0.20
+  stratify_col: "is_abnormal"
+  patient_id_col: "uid"
+
+label_derivation:
+  target_diseases:
+    - "Atelectasis"
+    - "Cardiomegaly"
+    - "Consolidation"
+    - "Edema"
+    - "Effusion"
+    - "Emphysema"
+    - "Fibrosis"
+    - "Fracture"
+    - "Hernia"
+    - "Infiltration"
+    - "Mass"
+    - "Nodule"
+    - "Pleural_Thickening"
+    - "Pneumothorax"
+  normal_label: "No_Finding"
+
+text_processing:
+  target_fields:
+    - "findings"
+    - "impression"
+  combine_target: true
+  min_char_length: 10
+  query_template: "Indication: {indication}. Analyze this chest radiograph and provide detailed findings and diagnostic impression."

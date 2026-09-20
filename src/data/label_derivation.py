@@ -142,14 +142,36 @@ PROBLEMS_MAPPING = {
 }
 
 
-def is_negated_mention(sentence: str, match_start: int) -> bool:
+POST_NEGATION_PATTERNS = [
+    r"\b(?:is\s+|are\s+)?(?:not\s+identified|not\s+seen|absent|ruled\s+out|unremarkable|negative|normal|resolved)\b",
+]
+
+
+def is_negated_mention(sentence: str, match_start: int, match_end: int = None) -> bool:
     """
-    Checks if a pattern match in a sentence is preceded by a negation within a 40-character window.
+    Checks if a pattern match in a sentence is preceded by a negation pattern
+    (across the full preceding clause) or followed by a post-negation pattern.
     """
-    window = sentence[max(0, match_start - 50):match_start].lower()
+    preceding = sentence[:match_start].lower()
     for neg in NEGATION_PATTERNS:
-        if re.search(neg, window):
-            return True
+        neg_matches = list(re.finditer(neg, preceding))
+        if neg_matches:
+            last_neg = neg_matches[-1]
+            intervening = preceding[last_neg.end():]
+            # Negation does not carry over if an adversative boundary separates them
+            if not re.search(r"\b(but|however|except|yet)\b", intervening):
+                return True
+
+    # Check post-match negation (e.g. "pleural effusion is not identified")
+    if match_end is not None:
+        following = sentence[match_end:].lower()
+        for post_neg in POST_NEGATION_PATTERNS:
+            post_match = re.search(post_neg, following)
+            if post_match and post_match.start() < 35:
+                intervening = following[:post_match.start()]
+                if not re.search(r"\b(but|however|and|with)\b", intervening):
+                    return True
+
     return False
 
 
@@ -175,7 +197,8 @@ def extract_labels_from_text(text: str) -> Dict[str, int]:
             for pattern in patterns:
                 for match in re.finditer(pattern, sentence, re.IGNORECASE):
                     start_pos = match.start()
-                    if not is_negated_mention(sentence, start_pos):
+                    end_pos = match.end()
+                    if not is_negated_mention(sentence, start_pos, end_pos):
                         labels[disease] = 1
                         break
                 if labels[disease] == 1:
@@ -186,14 +209,29 @@ def extract_labels_from_text(text: str) -> Dict[str, int]:
 
 def derive_ground_truth_labels(row: pd.Series) -> Dict[str, Any]:
     """
-    Derives unified multi-label ground truth by combining text extraction
-    with normalized MeSH and Problems fields.
+    Derives unified multi-label ground truth by combining curated NLM MeSH/Problems tags
+    with text extraction.
+    Reconciled Consensus Definition:
+    A study is Normal (No_Finding=1, is_abnormal=0) if and only if MeSH or Problems
+    is explicitly tagged as 'normal'. Otherwise, the study is Abnormal (is_abnormal=1,
+    No_Finding=0), with disease labels populated from report text and corroborated tags.
     """
+    problems_text = str(row.get("Problems", "")).strip().lower()
+    mesh_text = str(row.get("MeSH", "")).strip().lower()
+
+    is_normal_mesh = mesh_text == "normal"
+    is_normal_prob = problems_text == "normal"
+    is_normal_gold = is_normal_mesh or is_normal_prob
+
+    if is_normal_gold:
+        labels = {disease: 0 for disease in TARGET_DISEASES}
+        labels["No_Finding"] = 1
+        labels["is_abnormal"] = 0
+        return labels
+
+    # Abnormal study: extract labels from text
     text = f"{str(row.get('findings', ''))} {str(row.get('impression', ''))}"
     labels = extract_labels_from_text(text)
-
-    problems_text = str(row.get("Problems", "")).lower()
-    mesh_text = str(row.get("MeSH", "")).lower()
 
     # Corroborate with structured fields
     for disease, terms in PROBLEMS_MAPPING.items():
@@ -204,19 +242,6 @@ def derive_ground_truth_labels(row: pd.Series) -> Dict[str, Any]:
                 labels[disease] = 1
                 break
 
-    # Normal vs Abnormal determination
-    is_normal_mesh = "normal" in mesh_text and len(mesh_text.split(";")) == 1
-    has_positive_disease = any(val == 1 for val in labels.values())
-
-    if has_positive_disease:
-        labels["No_Finding"] = 0
-        labels["is_abnormal"] = 1
-    else:
-        labels["No_Finding"] = 1
-        # If MeSH or Problems explicitly indicates abnormal findings outside standard 14, mark abnormal
-        if (problems_text and "normal" not in problems_text) or (mesh_text and not is_normal_mesh):
-            labels["is_abnormal"] = 1
-        else:
-            labels["is_abnormal"] = 0
-
+    labels["No_Finding"] = 0
+    labels["is_abnormal"] = 1
     return labels

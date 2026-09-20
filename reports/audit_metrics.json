@@ -88,10 +88,10 @@
     "missing_from_disk_examples": [],
     "orphan_files_count": 4,
     "orphan_files_examples": [
-      "2084_IM-0715-1001-0002.dcm.png",
       "2560_IM-1064-4001.dcm.png",
-      "3809_IM-1919-1003002.dcm.png",
-      "2084_IM-0715-2001-0001.dcm.png"
+      "2084_IM-0715-1001-0002.dcm.png",
+      "2084_IM-0715-2001-0001.dcm.png",
+      "3809_IM-1919-1003002.dcm.png"
     ],
     "corrupt_files_count": 0,
     "corrupt_files": [],
@@ -105,8 +105,8 @@
     "height_max": 3001,
     "height_mean": 2220.3657295850066,
     "intensity_sample_count": 500,
-    "intensity_sample_mean": 146.2924003328628,
-    "intensity_sample_std": 26.258012312431287
+    "intensity_sample_mean": 147.3913530422074,
+    "intensity_sample_std": 25.799320275487673
   },
   "report_text": {
     "findings_char_len_mean": 190.24201506102312,

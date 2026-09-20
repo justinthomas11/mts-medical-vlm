@@ -38,9 +38,9 @@
 
 ## 3. Data Splits and Leakage Prevention
 To prevent data contamination, partitioning is strictly patient-level (`uid`) with zero patient overlap across splits:
-- `train`: 2,566 patients (69.99% of benchmark cohort; 72.21% abnormal prevalence)
-- `val`: 366 patients (9.98% of benchmark cohort; 72.40% abnormal prevalence)
-- `test`: 734 patients (20.02% of benchmark cohort; 72.21% abnormal prevalence)
+- `train`: 2,566 patients (69.99% of benchmark cohort; 63.99% abnormal prevalence)
+- `val`: 366 patients (9.98% of benchmark cohort; 63.93% abnormal prevalence)
+- `test`: 734 patients (20.02% of benchmark cohort; 64.03% abnormal prevalence)
 - Zero patient overlap verified via automated assertions (`assert len(train_uids & test_uids) == 0`).
 - Strict RAG Isolation: Only reports belonging to the `train` partition are indexed into the retrieval knowledge base.
 
@@ -63,6 +63,7 @@ Multi-label binary ground truth labels are extracted across 14 standard thoracic
 
 ## 5. Text Preprocessing and De-identification
 - Hospital de-identification placeholders (`XXXX`) are normalized to standardized semantic tokens: `[DATE]`, `[AGE]`, `[DOCTOR]`, and `[REDACTED]`.
+- **Uniform masking**: The original NLM de-identification pipeline replaces all protected health information (PHI) — dates, ages, names, and identifiers — with a uniform `XXXX` token, preventing linkage to individual patients. This masking is applied uniformly across all reports before public release.
 - Punctuation spacing and whitespace are normalized.
 - Missing sections are handled with graceful fallbacks (Impression-only target when Findings are absent).
 

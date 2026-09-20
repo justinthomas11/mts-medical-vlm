@@ -79,7 +79,7 @@ Each stage is scored with MTS to isolate what each component contributes.
 | --- | --- |
 | Diagnostic performance | Accuracy, precision, recall, F1 |
 | Reliability | Hallucination rate, calibration (ECE, Brier), response time |
-| Explainability | Grad-CAM localization accuracy, clinician agreement |
+| Explainability | Grad-CAM localization accuracy, automated clinical validity |
 | **MTS** | Weighted composite of the three dimensions (weights to be defined) |
 
 ---
@@ -95,10 +95,10 @@ The pipeline uses the **Indiana University Chest X-Ray (IU X-Ray)** collection:
 ### Patient-Level Partitioning (Seed 42)
 | Partition | Patients | % of Benchmark | Abnormal % | Role in Pipeline |
 | :--- | :--- | :--- | :--- | :--- |
-| `train` | 2,566 | 69.99% | 72.21% | Sole corpus for RAG vector index & VLM adaptation |
-| `val` | 366 | 9.98% | 72.40% | Prompt tuning, hyperparameter selection |
-| `test` | 734 | 20.02% | 72.21% | Held-out evaluation across S0-S3 ablation stages |
-| `excluded_lateral_only` | 162 | N/A | 82.72% | Multi-view / lateral extension studies |
+| `train` | 2,566 | 69.99% | 63.99% | Sole corpus for RAG vector index & VLM adaptation |
+| `val` | 366 | 9.98% | 63.93% | Prompt tuning, hyperparameter selection |
+| `test` | 734 | 20.02% | 64.03% | Held-out evaluation across S0-S3 ablation stages |
+| `excluded_lateral_only` | 162 | N/A | 77.78% | Multi-view / lateral extension studies |
 | `excluded_empty_target` | 23 | N/A | 0.00% | Empty findings and impression |
 
 Data is split strictly at the **patient level** (`uid`) with zero patient overlap (`assert len(train_uids & test_uids) == 0`). The RAG knowledge base is built from the training split only to prevent leakage.
@@ -182,7 +182,7 @@ All 11 unit tests pass with zero warnings or errors.
 
 - Single dataset (IU X-Ray, chest X-rays only), so generalization to other modalities is not claimed.
 - IU X-Ray has no gold diagnostic labels or bounding boxes. Labels are derived from reports via clinical rules, and localization evaluation uses anatomical priors and Pointing Game metrics.
-- Clinician agreement is evaluated via automated clinical validation proxies (RadGraph entity/relation agreement and CheXbert concordance).
+- Automated clinical validity is evaluated via standardized clinical NLP metrics (RadGraph entity/relation agreement and CheXbert diagnostic label concordance).
 
 ---
 

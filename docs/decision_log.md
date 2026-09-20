@@ -29,11 +29,11 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
 
 ---
 
-## Decision Record 003: Clinician Agreement Evaluation Protocol
+## Decision Record 003: Automated Clinical Validity Evaluation Protocol
 - Date: 2026-09-20
 - Status: Accepted
 - Context: Open Problem 3 identifies that a certified thoracic radiologist panel is not available for real-time human grading during dissertation experiments.
-- Decision: Proxy human clinician evaluation through automated clinical validity metrics: RadGraph entity/relation agreement (F1 score) and CheXbert diagnostic label concordance.
+- Decision: Evaluate automated clinical validity through standardized clinical NLP metrics: RadGraph entity/relation agreement (F1 score) and CheXbert diagnostic label concordance.
 - Alternatives Considered:
   1. Relying solely on lexical metrics (BLEU, ROUGE, METEOR): Rejected because lexical overlap correlates poorly with clinical correctness (e.g., "no pneumothorax" vs "pneumothorax").
   2. Non-expert manual annotation: Rejected due to lack of radiological credibility.
@@ -67,9 +67,13 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
 
 ## Decision Record 006: Localization Ground Truth Proxy for Grad-CAM
 - Date: 2026-09-20
-- Status: Accepted
+- Status: Accepted (Superseded in implementation details by DR016)
 - Context: Open Problem 2 notes that IU X-Ray provides no physician-drawn bounding boxes for focal lesions.
 - Decision: Evaluate Grad-CAM heatmaps quantitatively using anatomical priors and the Pointing Game protocol (verifying if peak saliency falls within the clinically relevant anatomical zone: cardiomegaly inside cardiac silhouette, pulmonary opacities inside lung fields), supplemented by a curated subset benchmarked against anatomical segmentations.
+- Citations:
+  - Class Activation Mapping (CAM): Zhou et al., "Learning Deep Features for Discriminative Localization", CVPR 2016.
+  - Grad-CAM: Selvaraju et al., "Grad-CAM: Visual Explanations from Deep Networks via Gradient-based Localization", ICCV 2017.
+  - Pointing Game Protocol: Zhang et al., "Top-Down Neural Attention by Excitation Backprop", ECCV 2016 / IJCV 2018.
 - Alternatives Considered:
   1. Fabricating manual bounding boxes without radiologist oversight: Rejected as non-defensible in a scientific dissertation.
   2. Qualitative visual inspection only: Rejected because MTS requires a continuous quantitative explainability score.
@@ -144,4 +148,75 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
 - Alternatives Considered:
   1. Plain CSV mapping without hashes: Rejected because silent file modification or corruption cannot be detected.
 - Justification: Guarantees strict cryptographic auditability for publication and external validation.
+
+---
+
+## Decision Record 013: Symmetric CheXbert Scoring of Reference and Generated Reports
+- Date: 2026-09-20
+- Status: Accepted
+- Context: The rule-based labeler (Decision Records 005 and 011) extracts ground-truth pathology labels from reference reports. Evaluation of generated reports must use the same labeling procedure to ensure fair comparison: if the labeler's negation detection or vocabulary differs between reference and generated text, metrics become unreliable.
+- Decision: Score both reference (ground truth) and VLM-generated reports using CheXbert (Stanford AIMI) as the common diagnostic label extractor. CheXbert produces a 14-class binary pathology vector per report. Clinical accuracy metrics (precision, recall, F1, example-based and label-based) are computed between the two CheXbert label vectors. The existing rule-based labeler is retained for offline preprocessing (label matrix generation, stratified splitting) but not for final evaluation comparisons.
+- Alternatives Considered:
+  1. Using the rule-based labeler for both reference and generated: Rejected because the rule-based labeler has known false-positive weaknesses on speculative language and limited recall on non-standard phrasing (see labeler validation report, `reports/labeler_validation_100.md`).
+  2. Using CheXbert for ground truth but rule-based for generated: Rejected due to asymmetric bias risk — any labeler-specific blind spots would create systematic error in one direction.
+  3. Manual radiologist annotation: Not feasible within dissertation timeline.
+- Justification: CheXbert is a BERT-based model trained on 187,000+ radiology reports, validated at Stanford AIMI with radiologist-level accuracy. Symmetric application eliminates labeler-induced bias and aligns the evaluation protocol with standard medical report generation benchmarks (e.g., CheXpert competition, RaDialog, CheXagent).
+
+---
+
+## Decision Record 014: Abnormal Rate Reconciliation — Consensus Definition
+- Date: 2026-09-20
+- Status: Accepted
+- Context: The data audit reported 64.19% abnormal rate (2,472 / 3,851) using a simple tag-level definition (MeSH or Problems field is NOT equal to "normal"), while the dataset splits reported 72.24% abnormal rate using the `derive_ground_truth_labels` function which additionally extracted diseases from free-text report sentences. The discrepancy of ~8% was caused by 310 reports where the NLM indexer tagged the study as "normal" but the regex text extractor detected disease-keyword mentions in negated contexts (e.g., "no pleural effusion" → false positive for Effusion).
+- Decision: Adopt the NLM curated MeSH/Problems tag as the authoritative normal/abnormal classifier. If MeSH or Problems equals "normal", the study is Normal (is_abnormal=0) regardless of text mentions. Text-based disease extraction is performed only on non-normal studies. This reconciles both the audit and splits to a consistent 64.19% abnormal rate across the full dataset and ~64% across all benchmark splits.
+- Alternatives Considered:
+  1. Keep the text-based definition (72.2%): Rejected because it overrides radiologist-curated NLM indexation with noisy regex extraction, producing false positives on negated mentions.
+  2. Use only tags without text extraction: Rejected because tags lack granularity for the 14-disease multi-label matrix needed for evaluation.
+- Justification: The NLM MeSH/Problems tags are assigned by medical librarians following controlled vocabulary standards, making them the most reliable available proxy for overall diagnostic status. Text extraction supplements with fine-grained per-disease labels only where the study is already confirmed abnormal.
+
+---
+
+## Decision Record 015: Uncertainty Quantification via Token Entropy and Sampled CheXbert Consensus
+- Date: 2026-09-20
+- Status: Accepted
+- Context: Medical diagnostic trustworthiness requires quantifying model uncertainty. Prior proposals suggested Monte Carlo (MC) Dropout. However, modern open-source LLM/VLM architectures (e.g., LLaMA, Vicuna, Mistral backbones in LLaVA-Med) do not employ active dropout layers during inference (dropout rate is zero or absent in standard transformer decoders), rendering MC Dropout functionally inactive or inapplicable without architectural modifications.
+- Decision: Drop MC Dropout entirely. Implement a two-tiered uncertainty quantification protocol:
+  1. **Lexical / Token-Level Uncertainty**: Extract predictive token entropy $H(Y|X) = -\frac{1}{T} \sum_{t=1}^T \sum_{v} P(y_t = v | y_{<t}, X) \log P(y_t = v | y_{<t}, X)$ directly from the autoregressive logit distributions during the greedy decoding pass.
+  2. **Semantic / Diagnostic Uncertainty**: Generate 5 stochastic sampled completions per patient ($T=0.7, \text{top\_p}=0.9$) and label each completion using CheXbert. Compute diagnostic confidence as the per-label agreement / consensus across the 5 sampled generations ($\text{Agreement}_c = \frac{1}{K} \sum_{k=1}^K \mathbb{I}(\hat{y}_{c}^{(k)} == \hat{y}_{c}^{(\text{greedy})})$).
+- Alternatives Considered:
+  1. MC Dropout: Rejected because LLaMA/Mistral architectures contain no dropout during evaluation; enabling training dropout creates out-of-distribution generation artifacts.
+  2. Deep Ensembles: Rejected due to prohibitive GPU memory and compute budget requirements.
+- Justification: Mean token entropy captures model hesitation at the linguistic token level, while 5-sample CheXbert concordance directly evaluates semantic clinical stability without modifying base model weights.
+
+---
+
+## Decision Record 016: Grad-CAM Redesign via Frozen Vision Encoder Classification Head and Anatomical Region Grounding
+- Date: 2026-09-20
+- Status: Accepted
+- Context: Running Grad-CAM end-to-end through a generative Vision-Language Model requires backpropagating gradients from output token logits through the entire 7B autoregressive LLM back into the vision encoder. This requires caching all intermediate transformer activations in memory during the backward pass (~24+ GB VRAM), making it infeasible on consumer hardware and inefficient even on cloud GPUs. Furthermore, standard Pointing Game protocols that count any saliency peak inside the entire lung fields as a "hit" are trivially satisfied (lungs occupy ~65% of the thoracic image area).
+- Decision: Redesign the visual explainability and localization protocol:
+  1. **Architecture**: Freeze the pretrained vision encoder (CLIP ViT-L/14 from LLaVA-Med). Train a lightweight multi-label linear/MLP classification head on pooled/patch visual features using the CheXpert 14 disease labels strictly on the **train partition only** (preventing test leakage). Run Grad-CAM backpropagations through this dedicated diagnostic head into the last vision encoder attention/convolutional layer.
+  2. **Documented Scientific Limitation**: This setup explains the visual representations learned by the vision encoder, rather than the full multimodal autoregressive decoding reasoning of the LLM.
+  3. **Non-Trivial Anatomical Grounding Targets**: Use `torchxrayvision` (PSPNet trained on ChestX-Det) to segment 14 anatomical structures. Evaluate the Pointing Game ($Hit = (x^*, y^*) \in \text{Mask}_{\text{target}}$) and Saliency Mass Ratio (SMR) against disease-specific anatomical compartments rather than global lung fields:
+     - *Cardiomegaly*: Heart / cardiac silhouette mask only (hits inside lungs count as misses).
+     - *Pleural Effusion*: Bilateral costophrenic angles and Facies Diaphragmatica / lower lung zone mask only.
+     - *Pneumothorax*: Apical and lateral peripheral pleural rim mask only.
+     - *Mediastinal Widening*: Mediastinum and Aorta mask only.
+     - *Fractures*: Clavicle, Scapula, and Spine masks (bony thorax).
+- Alternatives Considered:
+  1. Full LLM gradient backpropagation: Rejected due to GPU out-of-memory errors and excessive compute requirements.
+  2. Whole-lung Pointing Game target: Rejected as clinically uninformative and trivially satisfied.
+- Justification: Provides rigorous, reproducible, condition-specific spatial localization metrics with zero test leakage and feasible compute footprint.
+
+---
+
+## Decision Record 017: Diagnostic Evaluation Ontology Standardization
+- Date: 2026-09-20
+- Status: Accepted
+- Context: IU X-Ray data contains disparate labeling schemes: NLM MeSH tags, the rule-based labeler's 14 NIH ChestX-ray14 categories, and CheXbert's 14 observations. Evaluating generated text against reference text requires a unified, clinically standardized evaluation ontology.
+- Decision: Standardize strictly on **CheXbert's native 14-observation ontology** (Enlarged Cardiomediastinum, Cardiomegaly, Lung Opacity, Lung Lesion, Edema, Consolidation, Pneumonia, Atelectasis, Pneumothorax, Pleural Effusion, Pleural Other, Fracture, Support Devices, No Finding) as the primary clinical evaluation ontology for all VLM scoring (S0 through S3). Retain the rule-based NIH-style 14-condition matrix strictly for offline preprocessing, data audit, and stratified dataset partitioning.
+- Alternatives Considered:
+  1. Using the NIH-style rule-based ontology for evaluation: Rejected because CheXbert's pretrained BERT weights are optimized for the CheXpert 14 observations.
+  2. Merging or altering CheXbert label heads: Rejected to preserve full benchmark comparability with external literature.
+- Justification: Guarantees exact compatibility with official Stanford AIMI CheXbert scoring protocols and enables direct benchmarking against published medical VLM literature.
 

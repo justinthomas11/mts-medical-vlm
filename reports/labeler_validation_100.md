@@ -11,7 +11,7 @@
 - Sample Size: 100 randomly sampled IU X-Ray patient reports (Seed: 42).
 - Reference Standard: Heuristic mapping over NLM MeSH/Problems indexation (**Non-Independent**).
 - Diagnostic Breakdown in Sample: 36% Normal (36), 64% Abnormal (64).
-- Overall Concordance (Normal vs Abnormal): **100.0%** (36/36 normal, 64/64 abnormal) — *Circular due to shared NLM tag dependency*.
+- Overall Concordance (Normal vs Abnormal): **100.0%** (36/36 normal, 64/64 abnormal) â€” *Circular due to shared NLM tag dependency*.
 
 ## 2. Condition-Level Performance Metrics
 

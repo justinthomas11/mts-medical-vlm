@@ -1,0 +1,59 @@
+{
+  "labeler": "StanfordAIMI/RRG_scorers/chexbert.pth",
+  "uncertain_as_positive": true,
+  "n_reports": {
+    "train": 2566,
+    "val": 366,
+    "test": 734
+  },
+  "prevalence": {
+    "test": {
+      "Enlarged Cardiomediastinum": 0.0722,
+      "Cardiomegaly": 0.1417,
+      "Lung Opacity": 0.139,
+      "Lung Lesion": 0.0545,
+      "Edema": 0.0354,
+      "Consolidation": 0.0136,
+      "Pneumonia": 0.0381,
+      "Atelectasis": 0.094,
+      "Pneumothorax": 0.0041,
+      "Pleural Effusion": 0.0354,
+      "Pleural Other": 0.0177,
+      "Fracture": 0.0286,
+      "Support Devices": 0.049,
+      "No Finding": 0.3828
+    },
+    "train": {
+      "Enlarged Cardiomediastinum": 0.0787,
+      "Cardiomegaly": 0.1189,
+      "Lung Opacity": 0.1399,
+      "Lung Lesion": 0.0479,
+      "Edema": 0.0265,
+      "Consolidation": 0.009,
+      "Pneumonia": 0.0331,
+      "Atelectasis": 0.0939,
+      "Pneumothorax": 0.0094,
+      "Pleural Effusion": 0.0479,
+      "Pleural Other": 0.021,
+      "Fracture": 0.0347,
+      "Support Devices": 0.044,
+      "No Finding": 0.385
+    },
+    "val": {
+      "Enlarged Cardiomediastinum": 0.0765,
+      "Cardiomegaly": 0.1503,
+      "Lung Opacity": 0.1557,
+      "Lung Lesion": 0.0437,
+      "Edema": 0.0109,
+      "Consolidation": 0.0164,
+      "Pneumonia": 0.041,
+      "Atelectasis": 0.1093,
+      "Pneumothorax": 0.0055,
+      "Pleural Effusion": 0.0519,
+      "Pleural Other": 0.0246,
+      "Fracture": 0.0546,
+      "Support Devices": 0.0355,
+      "No Finding": 0.377
+    }
+  }
+}

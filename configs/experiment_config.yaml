@@ -1,0 +1,56 @@
+# Experiment Configuration for Phase II (S0-S3) of the Trustworthy CXR VLM Pipeline
+# Data paths, seed and splits live in configs/data_config.yaml.
+# Everything below is fixed BEFORE any test-split evaluation (see DR-018 .. DR-021).
+
+paths:
+  results_dir: "results"
+  reference_labels_csv: "results/labels/chexbert_reference.csv"
+  features_dir: "results/features"      # cached embeddings / patch tokens (git-ignored)
+  checkpoints_dir: "checkpoints"        # trained Grad-CAM head (git-ignored)
+
+vlm:
+  model_id: "chaoyinshe/llava-med-v1.5-mistral-7b-hf"   # HF-format conversion of microsoft/llava-med-v1.5-mistral-7b
+  quantization_local: "4bit"                           # RTX 3050 6 GB
+  quantization_cloud: "fp16"                           # Kaggle / Colab (final S0-S3 runs)
+  max_new_tokens: 256
+  greedy:
+    do_sample: false
+    num_beams: 1
+
+uncertainty:                 # DR-015, DR-020
+  n_samples: 5
+  temperature: 0.7
+  top_p: 0.9
+  review_budget: 0.20        # fraction of val reports above which the flag threshold is set
+
+rag:                         # DR-018
+  k: 3
+  alpha_grid: [0.0, 0.25, 0.5, 0.75, 1.0]   # weight of the visual channel, tuned on val
+  medcpt_query_encoder: "ncbi/MedCPT-Query-Encoder"
+  medcpt_article_encoder: "ncbi/MedCPT-Article-Encoder"
+
+xai:                         # DR-016, DR-019
+  head_hidden: 512
+  head_dropout: 0.2
+  epochs: 30
+  lr: 0.001
+  weight_decay: 0.01
+  batch_size: 64
+  rim_fraction: 0.06         # pleural-rim width as a fraction of the 512 px segmentation frame
+
+evaluation:
+  chexbert_repo: "StanfordAIMI/RRG_scorers"
+  chexbert_file: "chexbert.pth"
+  uncertain_as_positive: true
+  batch_size: 32
+  radgraph_reward_level: "partial"
+  ece_bins: 10
+
+mts:                         # DR-021 — fixed before test results are seen
+  weights:
+    diagnostic: 0.4
+    reliability: 0.3
+    explainability: 0.3
+  sensitivity_weights:       # reported alongside, to show conclusions are not weight-driven
+    equal: {diagnostic: 0.3333333333, reliability: 0.3333333333, explainability: 0.3333333334}
+    diagnostic_heavy: {diagnostic: 0.6, reliability: 0.2, explainability: 0.2}

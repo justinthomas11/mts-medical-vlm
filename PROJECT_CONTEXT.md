@@ -77,7 +77,7 @@ flowchart LR
 
 ---
 
-## 4. Comprehensive Decision Log (DR-001 through DR-017)
+## 4. Comprehensive Decision Log (DR-001 through DR-022)
 
 Every engineering and clinical choice is formally documented in `docs/decision_log.md`:
 
@@ -100,6 +100,11 @@ Every engineering and clinical choice is formally documented in `docs/decision_l
 | **DR-015** | Uncertainty Quantification Redesign | Accepted | Dropped MC Dropout because modern VLM autoregressive decoders (LLaMA/Vicuna) have no active dropout during inference. Implemented two-tiered protocol: (1) Token Entropy $H(Y\mid X)$ from greedy logits; (2) Semantic consensus across 5 stochastic sampled completions ($T=0.7$) labeled by CheXbert. |
 | **DR-016** | Grad-CAM Redesign & Anatomical Grounding | Accepted | Full backprop through 7B LLM requires ~24GB+ VRAM. Redesign: freeze pretrained vision encoder (CLIP ViT-L/14), train lightweight linear classification head on visual tokens using **train split only**, backprop Grad-CAM into vision encoder. Evaluate Pointing Game / SMR against organ-specific masks from `torchxrayvision` PSPNet (Heart for cardiomegaly, Costophrenic angles for effusion, etc.) rather than trivial whole-lung masks. |
 | **DR-017** | Evaluation Ontology Standardization | Accepted | Standardize strictly on CheXbert's native 14-observation ontology for model scoring (S0-S3). Retain rule-based 14 NIH-style matrix for offline preprocessing and stratification. |
+| **DR-018** | Hybrid RAG Retrieval (S1) | Accepted | Top-3 train reports by α·cos(CLIP image) + (1−α)·cos(MedCPT text); α tuned on val only; train-only index with leakage assertion. |
+| **DR-019** | Grad-CAM Targets & Metrics | Accepted | Condition-specific compartments derived from torchxrayvision PSPNet masks; Pointing Game + SMR with chance baseline and Wilson CI; rib-fracture and pneumothorax-count limitations documented. |
+| **DR-020** | Review Flag & Calibration (S3) | Accepted | Percentile-fused entropy + sample disagreement; flag threshold = val quantile at a 20% review budget; label-level ECE with confidence 1.0 for S0–S2. |
+| **DR-021** | MTS Definition & Weights | Accepted | MTS = 0.4·Diagnostic + 0.3·Reliability + 0.3·Explainability, fixed before test; equal and diagnostic-heavy weights reported as sensitivity. |
+| **DR-022** | Checkpoint & Tooling Compatibility | Accepted | HF-format LLaVA-Med v1.5 conversion (4-bit local, FP16 cloud); RadGraph in a transformers<5 venv; NumPy exact search when FAISS is blocked. |
 
 ---
 
@@ -255,7 +260,7 @@ TrustMedicalVLM/
 │       ├── splits_manifest.json     # Cryptographic manifest with SHA256 hashes per primary image
 │       └── splits_summary.csv       # Summary table of patient counts and disease prevalence by split
 ├── docs/
-│   ├── decision_log.md          # Formal engineering and clinical decision records (DR-001 - DR-017)
+│   ├── decision_log.md          # Formal engineering and clinical decision records (DR-001 - DR-022)
 │   └── data_card.md             # Standardized dataset documentation card
 ├── reports/
 │   ├── data_audit.md            # Empirical audit report across all 3,851 patients and 7,470 images

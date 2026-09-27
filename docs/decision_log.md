@@ -220,3 +220,87 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
   2. Merging or altering CheXbert label heads: Rejected to preserve full benchmark comparability with external literature.
 - Justification: Guarantees exact compatibility with official Stanford AIMI CheXbert scoring protocols and enables direct benchmarking against published medical VLM literature.
 
+---
+
+## Decision Record 018: Train-Only Hybrid Visual–Text Retrieval for S1 (RAG)
+- Date: 2026-09-27
+- Status: Accepted
+- Context: At inference time the only patient inputs are the frontal radiograph and the indication text. IU X-Ray indications are short and often uninformative (e.g. "[AGE] male, chest pain"), so text-only retrieval over reports would retrieve cases that match the indication rather than the image. DR-004 requires the knowledge base to contain train-split reports only.
+- Decision: Retrieve the top k = 3 train reports with a hybrid score  s = α · cos(image) + (1 − α) · cos(text).
+  1. **Visual channel**: pooled CLS embedding of the frozen LLaVA-Med CLIP ViT-L/14-336 vision tower (the same encoder the VLM sees; DR-016).
+  2. **Text channel**: MedCPT query encoder on the patient's indication vs. MedCPT article encoder on each train item's (indication, target report) pair, matching MedCPT's query→article training.
+  3. **Index**: exact inner-product search over L2-normalised vectors of the 2,566 train patients only (FAISS IndexFlatIP when available, otherwise an exact NumPy inner product with identical scores; see DR-022). A leakage assertion checks that no val/test uid is present in the index.
+  4. **Tuning**: α ∈ {0, 0.25, 0.5, 0.75, 1.0} is selected on VAL only, maximising the mean example-based F1 between the CheXbert labels of the query's reference report and those of each retrieved train report. Test is never used for selection.
+  5. **Prompt**: the 3 retrieved reports are placed before the standard query with an explicit instruction that they describe other patients and that only findings visible in the current image should be reported.
+- Alternatives Considered:
+  1. Text-only retrieval (indication → reports): Rejected because indications carry little diagnostic signal.
+  2. Image-only retrieval: Kept as the α = 1 grid point rather than fixed a priori.
+  3. BioLinkBERT embeddings: Rejected in favour of MedCPT, which is trained contrastively for biomedical query→document retrieval rather than as a general encoder.
+- Justification: Grounds generation in visually similar confirmed cases without leakage, and lets the data (val only) decide the balance between the two channels.
+
+---
+
+## Decision Record 019: Anatomical Target Compartments and Localization Metrics for Grad-CAM
+- Date: 2026-09-27
+- Status: Accepted
+- Context: DR-016 specifies condition-specific targets, but the torchxrayvision ChestX-Det PSPNet segments 14 structures (clavicles, scapulae, lungs, hila, heart, aorta, facies diaphragmatica, mediastinum, weasand, spine) and has no costophrenic-angle, pleural-rim or rib masks. The derived compartments and the metric definitions must be fixed before evaluation.
+- Decision:
+  1. **Target compartments** (CheXbert observation → mask):
+     - Cardiomegaly → Heart.
+     - Pleural Effusion → lower third of each lung's vertical extent ∪ Facies Diaphragmatica.
+     - Pneumothorax → peripheral lung rim (lung minus lung eroded by 6% of the 512 px frame) ∪ upper quarter of each lung (apex).
+     - Enlarged Cardiomediastinum → Mediastinum ∪ Aorta.
+     - Fracture → Clavicles ∪ Scapulae ∪ Spine.
+  2. **Frame**: heatmaps and masks share one padded-square frame (image padded to square, then resized to 512 px), so no coordinate re-mapping is needed.
+  3. **Grad-CAM layer**: layer −2 patch tokens (24 × 24) of the frozen vision tower, i.e. the features LLaVA-Med feeds to its projector.
+  4. **Metrics**: Pointing Game hit = arg-max heatmap pixel inside the target mask; Saliency Mass Ratio (SMR) = share of total positive heatmap mass inside the mask. Each is reported with the mask's area fraction as the chance baseline and a Wilson 95% CI for the Pointing Game. An all-zero heatmap counts as a miss with SMR = 0 (it is not dropped).
+  5. **Evaluated pairs**: every (patient, condition) pair where the CheXbert reference label is positive and a target exists; reported both over all such pairs and over the subset the head predicts positive.
+- Alternatives Considered:
+  1. Whole-lung targets: Rejected in DR-016 as trivially satisfied.
+  2. Manual bounding boxes: Rejected as unavailable and non-reproducible.
+- Limitations: Ribs are not segmented, so rib fractures (the most common kind) fall outside the bony-thorax target and are likely to count as misses. Test prevalence of Pneumothorax is 3 / 734 (CheXbert reference labels), so its per-condition estimate will have a very wide confidence interval.
+- Justification: Fixes every free parameter of the localization protocol before any test heatmap is computed.
+
+---
+
+## Decision Record 020: Review Flag Rule and Label-Level Calibration for S3
+- Date: 2026-09-27
+- Status: Accepted
+- Context: DR-015 defines the two uncertainty signals (mean greedy token entropy; per-label CheXbert agreement across 5 samples) but not how they combine into a human-review flag, nor how calibration is measured for stages that output no confidence.
+- Decision:
+  1. **Combined uncertainty**: each signal is converted to its empirical percentile within the VAL distribution; u = ½ (percentile(entropy) + percentile(1 − consensus)), where consensus is the mean per-label agreement over the 14 observations.
+  2. **Flag threshold**: the (1 − budget) quantile of u on VAL with a review budget of 20%, so about one in five reports goes to a radiologist. Test reports are flagged with this fixed threshold.
+  3. **Calibration (ECE)**: label-level ECE with 10 equal-width bins over all (report, observation) pairs. S3 confidence in each greedy label = its sample agreement. Stages S0–S2 emit no confidence, so they are scored as asserting every label with confidence 1.0 (the implicit claim of an unhedged report).
+  4. **Selective reporting**: clinical F1 is also reported separately for flagged and unflagged test reports, together with the area under the risk–coverage curve (risk = 1 − example-based F1).
+- Alternatives Considered:
+  1. Fitting a logistic error model on val: Rejected; adds a learned component with only 366 val patients and makes the flag harder to interpret.
+  2. Separate thresholds per signal: Rejected; two thresholds on 366 patients overfit more easily than one quantile on a combined score.
+- Justification: A fixed review budget is a clinically meaningful and easily explained operating point, and percentile fusion puts two differently scaled signals on a common scale without learned weights.
+
+---
+
+## Decision Record 021: Medical Trustworthiness Score (MTS) Definition and Weights
+- Date: 2026-09-27
+- Status: Accepted (fixed before any test-split generation or metric was computed)
+- Context: The roadmap requires MTS weights to be chosen and justified before test results are seen.
+- Decision:
+  - Diagnostic D = mean(CheXbert micro-F1 over 14 observations, RadGraph F1 (partial reward)).
+  - Reliability R = mean(1 − label-level ECE (DR-020), 1 − hallucination rate), where hallucination rate = generated positive findings (excluding "No Finding") absent from the reference, pooled over the split.
+  - Explainability E = mean(Pointing Game hit rate, SMR) (DR-019); E = 0 for S0 and S1, which produce no visual explanation.
+  - MTS = 0.4 · D + 0.3 · R + 0.3 · E.
+  - Inference latency is reported alongside but excluded from MTS because it depends on hardware and quantization.
+  - Sensitivity: MTS is also reported with equal weights (⅓ each) and diagnostic-heavy weights (0.6 / 0.2 / 0.2).
+- Justification: Diagnostic correctness is the precondition for any clinical use and receives the largest weight; reliability and explainability are the two trust properties this dissertation adds and receive equal weight. All components lie in [0, 1], so no further normalisation is needed. The sensitivity weights show whether the S0–S3 ranking depends on the weighting.
+
+---
+
+## Decision Record 022: Model Checkpoint Source and Tooling Compatibility
+- Date: 2026-09-27
+- Status: Accepted
+- Context: The official microsoft/llava-med-v1.5-mistral-7b checkpoint requires the original LLaVA code base, which is incompatible with current `transformers` (v5). Two evaluation dependencies also conflict with the local environment.
+- Decision:
+  1. **VLM checkpoint**: `chaoyinshe/llava-med-v1.5-mistral-7b-hf`, a Hugging Face-format conversion of LLaVA-Med v1.5 (Mistral-7B + CLIP ViT-L/14-336), loaded with `LlavaForConditionalGeneration`. 4-bit NF4 (bitsandbytes) locally with the vision tower and projector kept in FP16; FP16 on Kaggle/Colab for the reported runs. Images are padded to square with the CLIP mean colour, as in LLaVA-1.5.
+  2. **RadGraph**: its bundled AllenNLP code needs `transformers < 5`; locally it runs as a subprocess in a separate virtual environment (`RADGRAPH_PYTHON`), and in-process on Kaggle.
+  3. **FAISS**: the FAISS DLL is blocked by Windows Application Control on the development machine; the retriever falls back to an exact NumPy inner product, which returns identical scores to IndexFlatIP.
+- Limitations: The checkpoint is a community conversion, not an official Microsoft release; this is stated in the dissertation.
+- Justification: Keeps the whole pipeline on one maintained library version without changing any metric definition.

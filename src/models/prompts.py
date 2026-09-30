@@ -1,6 +1,9 @@
 """
 Prompt construction for S0 (image + indication query) and S1+ (query conditioned on
 retrieved train-split reports). Kept model-agnostic: returns the user-turn text only.
+
+Candidate query templates are compared on VAL only (src/pipeline/select_prompt.py, DR-023);
+the selected id is set in configs/experiment_config.yaml (vlm.prompt_template_id).
 """
 
 from typing import Sequence
@@ -9,6 +12,32 @@ RAG_HEADER = (
     "Reports from similar prior chest radiographs are provided for reference only. "
     "They describe other patients; describe only what is visible in this image."
 )
+
+PROMPT_TEMPLATES = {
+    # Original roadmap template (configs/data_config.yaml text_processing.query_template).
+    "baseline_v1": ("Indication: {indication}. Analyze this chest radiograph and provide detailed findings "
+                    "and diagnostic impression."),
+    # Explicit radiology-report format with an anatomical checklist.
+    "report_v2": ("You are a radiologist. Write the radiology report for this frontal chest X-ray.\n"
+                  "Clinical indication: {indication}.\n"
+                  "Use exactly two sections:\n"
+                  "FINDINGS: describe the heart, mediastinum, lungs, pleura and bones.\n"
+                  "IMPRESSION: a one-sentence diagnostic summary.\n"
+                  "Be concise and state normal findings when the study is normal."),
+    # Minimal explicit-format instruction.
+    "report_v3": ("Write a concise chest X-ray radiology report with a FINDINGS section and an IMPRESSION "
+                  "section. Indication: {indication}."),
+}
+
+MISSING_INDICATION = "not provided"
+
+
+def build_query(indication, template_id: str) -> str:
+    """Fills a template with the cleaned indication; empty/NaN indications become 'not provided'."""
+    text = "" if indication is None else str(indication).strip()
+    if text.lower() in ("", "nan", "none", "none."):
+        text = MISSING_INDICATION
+    return PROMPT_TEMPLATES[template_id].format(indication=text.rstrip("."))
 
 
 def s0_prompt(clinical_query: str) -> str:

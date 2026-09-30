@@ -1,0 +1,75 @@
+{
+  "split": "val",
+  "n_patients": 40,
+  "uids": [
+    3,
+    4,
+    5,
+    11,
+    13,
+    19,
+    36,
+    38,
+    46,
+    56,
+    58,
+    60,
+    65,
+    75,
+    153,
+    171,
+    175,
+    188,
+    201,
+    255,
+    258,
+    260,
+    273,
+    279,
+    280,
+    291,
+    292,
+    301,
+    327,
+    331,
+    339,
+    346,
+    350,
+    362,
+    418,
+    421,
+    427,
+    428,
+    490,
+    511
+  ],
+  "quantization": "4bit",
+  "model_id": "chaoyinshe/llava-med-v1.5-mistral-7b-hf",
+  "criterion": "CheXbert micro-F1 (14), tie-break format compliance",
+  "templates": {
+    "baseline_v1": "Indication: {indication}. Analyze this chest radiograph and provide detailed findings and diagnostic impression.",
+    "report_v2": "You are a radiologist. Write the radiology report for this frontal chest X-ray.\nClinical indication: {indication}.\nUse exactly two sections:\nFINDINGS: describe the heart, mediastinum, lungs, pleura and bones.\nIMPRESSION: a one-sentence diagnostic summary.\nBe concise and state normal findings when the study is normal.",
+    "report_v3": "Write a concise chest X-ray radiology report with a FINDINGS section and an IMPRESSION section. Indication: {indication}."
+  },
+  "results": {
+    "baseline_v1": {
+      "chexbert_micro_f1_14": 0.15873015873015872,
+      "chexbert_macro_f1_14": 0.11059672353790002,
+      "format_compliance": 0.0,
+      "mean_words": 71.375
+    },
+    "report_v2": {
+      "chexbert_micro_f1_14": 0.35051546391752575,
+      "chexbert_macro_f1_14": 0.04497354497354498,
+      "format_compliance": 0.975,
+      "mean_words": 40.2
+    },
+    "report_v3": {
+      "chexbert_micro_f1_14": 0.16,
+      "chexbert_macro_f1_14": 0.07062183847898133,
+      "format_compliance": 0.025,
+      "mean_words": 20.325
+    }
+  },
+  "selected": "report_v2"
+}

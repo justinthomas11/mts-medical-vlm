@@ -16,7 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.models.llava_med import CLIP_MEAN_RGB, pad_to_square, token_entropies
-from src.models.prompts import RAG_HEADER, rag_prompt, s0_prompt
+from src.models.prompts import MISSING_INDICATION, PROMPT_TEMPLATES, RAG_HEADER, build_query, rag_prompt, s0_prompt
 
 
 def test_pad_to_square_centres_grayscale_image():
@@ -44,6 +44,23 @@ def test_token_entropy_uniform_and_peaked():
 def test_s0_prompt_is_clinical_query():
     q = "Indication: cough. Analyze this chest radiograph and provide detailed findings and diagnostic impression."
     assert s0_prompt(f"  {q} ") == q
+
+
+def test_baseline_template_reproduces_original_query():
+    """baseline_v1 must match the roadmap template used to build `clinical_query` in preprocessing."""
+    q = build_query("Positive TB test", "baseline_v1")
+    assert q == ("Indication: Positive TB test. Analyze this chest radiograph and provide detailed findings "
+                 "and diagnostic impression.")
+
+
+@pytest.mark.parametrize("missing", [None, "", "nan", float("nan"), "None."])
+def test_build_query_handles_missing_indication(missing):
+    for tid in PROMPT_TEMPLATES:
+        assert MISSING_INDICATION in build_query(missing, tid)
+
+
+def test_build_query_avoids_double_period():
+    assert ".." not in build_query("Chest pain.", "report_v3")
 
 
 def test_rag_prompt_orders_context_before_query():

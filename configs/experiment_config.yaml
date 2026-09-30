@@ -13,6 +13,9 @@ vlm:
   quantization_local: "4bit"                           # RTX 3050 6 GB
   quantization_cloud: "fp16"                           # Kaggle / Colab (final S0-S3 runs)
   max_new_tokens: 256
+  # Query template id from src/models/prompts.py. Stays on the original roadmap template until the
+  # val prompt comparison (results/prompt_selection/) is reviewed and recorded as DR-023.
+  prompt_template_id: "baseline_v1"
   greedy:
     do_sample: false
     num_beams: 1

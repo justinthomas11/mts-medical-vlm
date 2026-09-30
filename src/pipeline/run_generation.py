@@ -26,7 +26,7 @@ import platform
 
 import pandas as pd
 
-from src.models.prompts import RAG_HEADER, rag_prompt, s0_prompt
+from src.models.prompts import PROMPT_TEMPLATES, RAG_HEADER, build_query, rag_prompt, s0_prompt
 from src.pipeline.common import load_benchmark, load_configs, load_image, path, set_seed
 
 
@@ -79,6 +79,7 @@ def main():
     import transformers
 
     unc = ecfg["uncertainty"]
+    template_id = ecfg["vlm"]["prompt_template_id"]
     gen = LlavaMedGenerator(ecfg["vlm"]["model_id"], quantization=args.quant,
                             max_new_tokens=ecfg["vlm"]["max_new_tokens"])
     run_config = {
@@ -87,7 +88,7 @@ def main():
         "decoding_greedy": {"do_sample": False, "num_beams": 1, "max_new_tokens": ecfg["vlm"]["max_new_tokens"]},
         "decoding_samples": ({"n": args.samples, "temperature": unc["temperature"], "top_p": unc["top_p"],
                               "top_k": 0, "seed": f"{seed} + uid"} if args.samples else None),
-        "prompt_template": dcfg["text_processing"]["query_template"],
+        "prompt_template_id": template_id, "prompt_template": PROMPT_TEMPLATES[template_id],
         "rag": ({"k": ecfg["rag"]["k"], "header": RAG_HEADER} if args.stage == "s1" else None),
         "image_preprocessing": "pad-to-square (CLIP mean colour) -> CLIPImageProcessor 336px",
         "torch": torch.__version__, "transformers": transformers.__version__,
@@ -99,13 +100,14 @@ def main():
 
     with open(gen_path, "a", encoding="utf-8") as out:
         for i, row in enumerate(todo.itertuples(index=False)):
+            query = build_query(row.clean_indication, template_id)
             if args.stage == "s1":
                 r = retrieval.loc[row.uid]
                 context_uids = [int(r[f"retrieved_uid_{j + 1}"]) for j in range(ecfg["rag"]["k"])]
-                prompt = rag_prompt(row.clinical_query, [reports[u] for u in context_uids])
+                prompt = rag_prompt(query, [reports[u] for u in context_uids])
             else:
                 context_uids = []
-                prompt = s0_prompt(row.clinical_query)
+                prompt = s0_prompt(query)
 
             res = gen.generate(load_image(dcfg, row.primary_image_filename), prompt, n_samples=args.samples,
                                temperature=unc["temperature"], top_p=unc["top_p"], seed=seed + int(row.uid))

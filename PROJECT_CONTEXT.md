@@ -77,7 +77,7 @@ flowchart LR
 
 ---
 
-## 4. Comprehensive Decision Log (DR-001 through DR-022)
+## 4. Comprehensive Decision Log (DR-001 through DR-023)
 
 Every engineering and clinical choice is formally documented in `docs/decision_log.md`:
 
@@ -105,6 +105,7 @@ Every engineering and clinical choice is formally documented in `docs/decision_l
 | **DR-020** | Review Flag & Calibration (S3) | Accepted | Percentile-fused entropy + sample disagreement; flag threshold = val quantile at a 20% review budget; label-level ECE with confidence 1.0 for S0–S2. |
 | **DR-021** | MTS Definition & Weights | Accepted | MTS = 0.4·Diagnostic + 0.3·Reliability + 0.3·Explainability, fixed before test; equal and diagnostic-heavy weights reported as sensitivity. |
 | **DR-022** | Checkpoint & Tooling Compatibility | Accepted | HF-format LLaVA-Med v1.5 conversion (4-bit local, FP16 cloud); RadGraph in a transformers<5 venv; NumPy exact search when FAISS is blocked. |
+| **DR-023** | Effusion Target Correction | Accepted | Pleural Effusion target = dilated lower third of lungs; PSPNet Facies Diaphragmatica dropped because it marks the sub-diaphragmatic abdomen (amends DR-019; found on train/val). |
 
 ---
 
@@ -260,7 +261,7 @@ TrustMedicalVLM/
 │       ├── splits_manifest.json     # Cryptographic manifest with SHA256 hashes per primary image
 │       └── splits_summary.csv       # Summary table of patient counts and disease prevalence by split
 ├── docs/
-│   ├── decision_log.md          # Formal engineering and clinical decision records (DR-001 - DR-022)
+│   ├── decision_log.md          # Formal engineering and clinical decision records (DR-001 - DR-023)
 │   └── data_card.md             # Standardized dataset documentation card
 ├── reports/
 │   ├── data_audit.md            # Empirical audit report across all 3,851 patients and 7,470 images

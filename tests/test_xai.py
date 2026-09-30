@@ -94,10 +94,20 @@ def test_derived_targets_cover_all_conditions():
 
 
 def test_lower_zone_is_bottom_of_lungs():
-    lower = derive_targets(_toy_structures())["costophrenic_lower_zone"]
+    radius = max(1, int(0.06 * 100))
+    lower = derive_targets(_toy_structures(), rim_fraction=0.06)["costophrenic_lower_zone"]
     rows = np.where(lower.any(axis=1))[0]
-    assert rows.min() >= 10 + int(2 / 3 * 80) - 1   # starts in the bottom third of the lung extent
-    assert not lower[20, 20]                          # upper lung excluded
+    assert rows.min() >= 10 + int(2 / 3 * 80) - radius   # bottom third of the lung, widened by the rim width
+    assert not lower[20, 20]                               # upper lung excluded
+    assert lower[89 + radius - 1, 20]                      # reaches just below the lung base (costophrenic angle)
+
+
+def test_effusion_target_excludes_subdiaphragmatic_region():
+    """DR-023: the Facies Diaphragmatica mask (abdomen below the lungs) must not be part of the target."""
+    s = _toy_structures()
+    s["Facies Diaphragmatica"][95:100, :] = True
+    lower = derive_targets(s)["costophrenic_lower_zone"]
+    assert not lower[99, 50]
 
 
 def test_pleural_rim_excludes_lung_core_but_includes_apex():

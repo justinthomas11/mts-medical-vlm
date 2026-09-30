@@ -18,7 +18,7 @@ SEG_SIZE = 512
 # CheXbert observation -> anatomical target compartment
 CONDITION_TARGETS: Dict[str, str] = {
     "Cardiomegaly": "heart",
-    "Pleural Effusion": "costophrenic_lower_zone",
+    "Pleural Effusion": "costophrenic_lower_zone",   # lower third of lungs, dilated (DR-023)
     "Pneumothorax": "pleural_rim",
     "Enlarged Cardiomediastinum": "mediastinum_aorta",
     "Fracture": "bony_thorax",
@@ -76,10 +76,14 @@ def derive_targets(structures: Dict[str, np.ndarray], rim_fraction: float = 0.06
         lower_zone |= _vertical_fraction(lung, 2 / 3, 1.0)
         peripheral = lung & ~ndimage.binary_erosion(lung, iterations=radius)
         rim |= peripheral | _vertical_fraction(lung, 0.0, 0.25)
+    # DR-023: widen the lung bases by the rim width to reach the costophrenic angles, where fluid
+    # blunts the lung edge. "Facies Diaphragmatica" is NOT used: PSPNet marks the sub-diaphragmatic
+    # (abdominal) region with it, which would make effusion hits near-automatic.
+    lower_zone = ndimage.binary_dilation(lower_zone, iterations=radius)
 
     return {
         "heart": structures["Heart"],
-        "costophrenic_lower_zone": lower_zone | structures["Facies Diaphragmatica"],
+        "costophrenic_lower_zone": lower_zone,
         "pleural_rim": rim,
         "mediastinum_aorta": structures["Mediastinum"] | structures["Aorta"],
         "bony_thorax": (structures["Left Clavicle"] | structures["Right Clavicle"] | structures["Left Scapula"]

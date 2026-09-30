@@ -304,3 +304,15 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
   3. **FAISS**: the FAISS DLL is blocked by Windows Application Control on the development machine; the retriever falls back to an exact NumPy inner product, which returns identical scores to IndexFlatIP.
 - Limitations: The checkpoint is a community conversion, not an official Microsoft release; this is stated in the dissertation.
 - Justification: Keeps the whole pipeline on one maintained library version without changing any metric definition.
+
+---
+
+## Decision Record 023: Correction of the Pleural Effusion Localization Target (amends DR-019)
+- Date: 2026-09-30
+- Status: Accepted (found on train/val images before any test-split localization was run)
+- Context: DR-019 defined the Pleural Effusion target as the lower third of each lung ∪ the PSPNet "Facies Diaphragmatica" mask. Visual overlays and a measurement on 15 train images showed that PSPNet assigns "Facies Diaphragmatica" to the region *below* the lungs (mean rows 330–486 of the 512 px frame vs. a mean lung base at row 387), i.e. the sub-diaphragmatic abdomen, covering 10.5–26.2% of the image (mean 16.9%). Including it raised the mean effusion target from 7.8% to 24.6% of the image, so a heatmap peak anywhere in the upper abdomen would count as an effusion "hit".
+- Decision: Pleural Effusion target = lower third of each lung's vertical extent, dilated by the pleural-rim width (6% of the frame, ≈ 30 px) so that it reaches the costophrenic angles and the blunted lung base where fluid collects. The Facies Diaphragmatica mask is no longer used. All other DR-019 targets are unchanged.
+- Alternatives Considered:
+  1. Keep Facies Diaphragmatica: Rejected; it is abdominal, not pleural, and inflates chance-level hits.
+  2. Undilated lower third only: Rejected; fluid blunts the lung edge, so the segmented lung stops above the meniscus and true effusion saliency would fall just outside the mask.
+- Justification: Keeps the effusion target anatomically pleural and comparable in size to the other targets, preserving the non-trivial Pointing Game required by DR-016. The chance baseline (mask area fraction) is still reported for every condition.

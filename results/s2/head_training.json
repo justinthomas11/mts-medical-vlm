@@ -1,0 +1,258 @@
+{
+  "fit_split": "train",
+  "selection_split": "val",
+  "n_train": 2566,
+  "n_val": 366,
+  "encoder": "chaoyinshe/llava-med-v1.5-mistral-7b-hf :: vision_tower layer -2 (frozen)",
+  "hyperparameters": {
+    "head_hidden": 512,
+    "head_dropout": 0.2,
+    "epochs": 30,
+    "lr": 0.001,
+    "weight_decay": 0.01,
+    "batch_size": 64,
+    "rim_fraction": 0.06
+  },
+  "seed": 42,
+  "best_epoch": 17,
+  "val_macro_auroc": 0.7452528552278375,
+  "val_micro_f1_at_tuned_thresholds": 0.36363636363636365,
+  "per_label": {
+    "Enlarged Cardiomediastinum": {
+      "train_positives": 202,
+      "val_positives": 28,
+      "val_auroc": 0.7330938292476754,
+      "threshold": 0.7499999999999999
+    },
+    "Cardiomegaly": {
+      "train_positives": 305,
+      "val_positives": 55,
+      "val_auroc": 0.7659163987138263,
+      "threshold": 0.4599999999999999
+    },
+    "Lung Opacity": {
+      "train_positives": 359,
+      "val_positives": 57,
+      "val_auroc": 0.7247487651166752,
+      "threshold": 0.4799999999999999
+    },
+    "Lung Lesion": {
+      "train_positives": 123,
+      "val_positives": 16,
+      "val_auroc": 0.6985714285714286,
+      "threshold": 0.33999999999999997
+    },
+    "Edema": {
+      "train_positives": 68,
+      "val_positives": 4,
+      "val_auroc": 0.805939226519337,
+      "threshold": 0.8899999999999999
+    },
+    "Consolidation": {
+      "train_positives": 23,
+      "val_positives": 6,
+      "val_auroc": 0.8291666666666666,
+      "threshold": 0.7999999999999999
+    },
+    "Pneumonia": {
+      "train_positives": 85,
+      "val_positives": 15,
+      "val_auroc": 0.6748338081671416,
+      "threshold": 0.48999999999999994
+    },
+    "Atelectasis": {
+      "train_positives": 241,
+      "val_positives": 40,
+      "val_auroc": 0.7886503067484661,
+      "threshold": 0.7499999999999999
+    },
+    "Pneumothorax": {
+      "train_positives": 24,
+      "val_positives": 2,
+      "val_auroc": 0.6085164835164836,
+      "threshold": 0.27999999999999997
+    },
+    "Pleural Effusion": {
+      "train_positives": 123,
+      "val_positives": 19,
+      "val_auroc": 0.8308812376763234,
+      "threshold": 0.8899999999999999
+    },
+    "Pleural Other": {
+      "train_positives": 54,
+      "val_positives": 9,
+      "val_auroc": 0.8328664799253034,
+      "threshold": 0.8099999999999999
+    },
+    "Fracture": {
+      "train_positives": 89,
+      "val_positives": 20,
+      "val_auroc": 0.590028901734104,
+      "threshold": 0.48999999999999994
+    },
+    "Support Devices": {
+      "train_positives": 113,
+      "val_positives": 13,
+      "val_auroc": 0.7792547395946829,
+      "threshold": 0.7599999999999999
+    },
+    "No Finding": {
+      "train_positives": 988,
+      "val_positives": 138,
+      "val_auroc": 0.7710717009916094,
+      "threshold": 0.5499999999999999
+    }
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.2351700080063597,
+      "val_macro_auroc": 0.6443871657593662
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.1713830828666687,
+      "val_macro_auroc": 0.6837195746827435
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.1347405295398025,
+      "val_macro_auroc": 0.7058971601191736
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.0942277431673866,
+      "val_macro_auroc": 0.7160120506443363
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.090269746347414,
+      "val_macro_auroc": 0.7212280197391071
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.0646865038972113,
+      "val_macro_auroc": 0.7280848956773666
+    },
+    {
+      "epoch": 7,
+      "train_loss": 1.0566252954100968,
+      "val_macro_auroc": 0.7352902868559565
+    },
+    {
+      "epoch": 8,
+      "train_loss": 1.0348363877364832,
+      "val_macro_auroc": 0.7346058374276984
+    },
+    {
+      "epoch": 9,
+      "train_loss": 1.020652038179518,
+      "val_macro_auroc": 0.7404174554951094
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.999843968698408,
+      "val_macro_auroc": 0.7387072986222714
+    },
+    {
+      "epoch": 11,
+      "train_loss": 1.0158237884589125,
+      "val_macro_auroc": 0.7337935468076034
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.9875347151574174,
+      "val_macro_auroc": 0.7380992564480601
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.9685674874650624,
+      "val_macro_auroc": 0.7405432085472345
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.9542237458894333,
+      "val_macro_auroc": 0.7409696409548756
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.9435554749781697,
+      "val_macro_auroc": 0.7417261025279919
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.9356833629466924,
+      "val_macro_auroc": 0.7427426035870225
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.9190655203183368,
+      "val_macro_auroc": 0.7452528552278375
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.9103421912189582,
+      "val_macro_auroc": 0.7443106237898199
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.9122268356853226,
+      "val_macro_auroc": 0.74170123705014
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.8904507510938964,
+      "val_macro_auroc": 0.7428364082033371
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.8779676677840628,
+      "val_macro_auroc": 0.7411830978243498
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.874085886536031,
+      "val_macro_auroc": 0.7424997624164532
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.8719057987094948,
+      "val_macro_auroc": 0.7436224377354929
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.8704787186134261,
+      "val_macro_auroc": 0.745206806528457
+    },
+    {
+      "epoch": 25,
+      "train_loss": 0.8603503980723937,
+      "val_macro_auroc": 0.7445123615240431
+    },
+    {
+      "epoch": 26,
+      "train_loss": 0.8599183682529423,
+      "val_macro_auroc": 0.745004697917739
+    },
+    {
+      "epoch": 27,
+      "train_loss": 0.8554448413830295,
+      "val_macro_auroc": 0.7445935059394294
+    },
+    {
+      "epoch": 28,
+      "train_loss": 0.8500689982624604,
+      "val_macro_auroc": 0.744723344892327
+    },
+    {
+      "epoch": 29,
+      "train_loss": 0.8491179429267592,
+      "val_macro_auroc": 0.7446399266407442
+    },
+    {
+      "epoch": 30,
+      "train_loss": 0.8501083761198114,
+      "val_macro_auroc": 0.7447192156909592
+    }
+  ]
+}

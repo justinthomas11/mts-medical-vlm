@@ -77,7 +77,7 @@ flowchart LR
 
 ---
 
-## 4. Comprehensive Decision Log (DR-001 through DR-024)
+## 4. Comprehensive Decision Log (DR-001 through DR-025)
 
 Every engineering and clinical choice is formally documented in `docs/decision_log.md`:
 
@@ -107,6 +107,7 @@ Every engineering and clinical choice is formally documented in `docs/decision_l
 | **DR-022** | Checkpoint & Tooling Compatibility | Accepted | HF-format LLaVA-Med v1.5 conversion (4-bit local, FP16 cloud); RadGraph in a transformers<5 venv; NumPy exact search when FAISS is blocked. |
 | **DR-023** | Effusion Target Correction | Accepted | Pleural Effusion target = dilated lower third of lungs; PSPNet Facies Diaphragmatica dropped because it marks the sub-diaphragmatic abdomen (amends DR-019; found on train/val). |
 | **DR-024** | Prompt Selection (val) | Accepted | Roadmap prompt kept for S0–S3 after a 5-template val comparison; micro-F1 favoured an always-'normal' prompt, so selection used CheXbert macro-F1 (criterion change disclosed). |
+| **DR-025** | RAG Prompt Layout (val) | Accepted | Query first, retrieved reports, then an explicit write-this-report instruction; the original layout returned empty reports for 15% of val patients. |
 
 ---
 
@@ -262,7 +263,7 @@ TrustMedicalVLM/
 │       ├── splits_manifest.json     # Cryptographic manifest with SHA256 hashes per primary image
 │       └── splits_summary.csv       # Summary table of patient counts and disease prevalence by split
 ├── docs/
-│   ├── decision_log.md          # Formal engineering and clinical decision records (DR-001 - DR-024)
+│   ├── decision_log.md          # Formal engineering and clinical decision records (DR-001 - DR-025)
 │   └── data_card.md             # Standardized dataset documentation card
 ├── reports/
 │   ├── data_audit.md            # Empirical audit report across all 3,851 patients and 7,470 images

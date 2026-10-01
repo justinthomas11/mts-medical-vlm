@@ -26,7 +26,7 @@ import platform
 
 import pandas as pd
 
-from src.models.prompts import PROMPT_TEMPLATES, RAG_HEADER, build_query, rag_prompt, s0_prompt
+from src.models.prompts import PROMPT_TEMPLATES, RAG_HEADER, RAG_LAYOUTS, build_query, rag_prompt, s0_prompt
 from src.pipeline.common import load_benchmark, load_configs, load_image, path, set_seed
 
 
@@ -44,6 +44,8 @@ def main():
     parser.add_argument("--samples", type=int, default=0, help="stochastic samples per patient (S3 uses 5)")
     parser.add_argument("--limit", type=int, default=None, help="first N patients (smoke tests)")
     parser.add_argument("--tag", default="", help="suffix for output files, e.g. smoke20")
+    parser.add_argument("--rag-layout", choices=list(RAG_LAYOUTS), default=None,
+                        help="override rag.layout from the config (val comparisons only)")
     args = parser.parse_args()
 
     dcfg, ecfg = load_configs()
@@ -80,6 +82,7 @@ def main():
 
     unc = ecfg["uncertainty"]
     template_id = ecfg["vlm"]["prompt_template_id"]
+    layout = args.rag_layout or ecfg["rag"]["layout"]
     gen = LlavaMedGenerator(ecfg["vlm"]["model_id"], quantization=args.quant,
                             max_new_tokens=ecfg["vlm"]["max_new_tokens"])
     run_config = {
@@ -89,7 +92,7 @@ def main():
         "decoding_samples": ({"n": args.samples, "temperature": unc["temperature"], "top_p": unc["top_p"],
                               "top_k": 0, "seed": f"{seed} + uid"} if args.samples else None),
         "prompt_template_id": template_id, "prompt_template": PROMPT_TEMPLATES[template_id],
-        "rag": ({"k": ecfg["rag"]["k"], "header": RAG_HEADER} if args.stage == "s1" else None),
+        "rag": ({"k": ecfg["rag"]["k"], "layout": layout, "header": RAG_HEADER} if args.stage == "s1" else None),
         "image_preprocessing": "pad-to-square (CLIP mean colour) -> CLIPImageProcessor 336px",
         "torch": torch.__version__, "transformers": transformers.__version__,
         "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu",
@@ -104,7 +107,7 @@ def main():
             if args.stage == "s1":
                 r = retrieval.loc[row.uid]
                 context_uids = [int(r[f"retrieved_uid_{j + 1}"]) for j in range(ecfg["rag"]["k"])]
-                prompt = rag_prompt(query, [reports[u] for u in context_uids])
+                prompt = rag_prompt(query, [reports[u] for u in context_uids], layout=layout)
             else:
                 context_uids = []
                 prompt = s0_prompt(query)
@@ -118,7 +121,7 @@ def main():
             out.write(json.dumps(record, ensure_ascii=False) + "\n")
             out.flush()
             print(f"  [{len(done) + i + 1}/{len(df)}] uid={row.uid} tokens={res.n_tokens} "
-                  f"H={res.mean_token_entropy:.3f} t={res.latency_s:.1f}s")
+                  f"H={res.mean_token_entropy:.3f} t={res.latency_s:.1f}s", flush=True)
     print(f"Wrote {gen_path}")
 
 

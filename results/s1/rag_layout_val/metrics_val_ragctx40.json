@@ -1,0 +1,145 @@
+{
+  "generations": "results\\s1\\generations_val_ragctx40.jsonl",
+  "split": "val",
+  "n_reports": 40,
+  "clinical": {
+    "n_reports": 40,
+    "micro_14": {
+      "precision": 0.35714285714285715,
+      "recall": 0.2727272727272727,
+      "f1": 0.30927835051546393
+    },
+    "macro_14": {
+      "precision": 0.1636904761904762,
+      "recall": 0.10555555555555556,
+      "f1": 0.1173469387755102
+    },
+    "micro_5": {
+      "precision": 0.4,
+      "recall": 0.11764705882352941,
+      "f1": 0.18181818181818182
+    },
+    "macro_5": {
+      "precision": 0.3,
+      "recall": 0.10666666666666666,
+      "f1": 0.15714285714285714
+    },
+    "example_f1_14": 0.35375,
+    "exact_match_14": 0.325,
+    "per_label": {
+      "Enlarged Cardiomediastinum": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 4,
+        "predicted_positive": 2
+      },
+      "Cardiomegaly": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 8,
+        "predicted_positive": 2
+      },
+      "Lung Opacity": {
+        "precision": 0.3333333333333333,
+        "recall": 0.3333333333333333,
+        "f1": 0.3333333333333333,
+        "support": 6,
+        "predicted_positive": 6
+      },
+      "Lung Lesion": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 2,
+        "predicted_positive": 1
+      },
+      "Edema": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1,
+        "predicted_positive": 0
+      },
+      "Consolidation": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0,
+        "predicted_positive": 0
+      },
+      "Pneumonia": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 3,
+        "predicted_positive": 3
+      },
+      "Atelectasis": {
+        "precision": 0.5,
+        "recall": 0.2,
+        "f1": 0.2857142857142857,
+        "support": 5,
+        "predicted_positive": 2
+      },
+      "Pneumothorax": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0,
+        "predicted_positive": 0
+      },
+      "Pleural Effusion": {
+        "precision": 1.0,
+        "recall": 0.3333333333333333,
+        "f1": 0.5,
+        "support": 3,
+        "predicted_positive": 1
+      },
+      "Pleural Other": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 2,
+        "predicted_positive": 0
+      },
+      "Fracture": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0,
+        "predicted_positive": 1
+      },
+      "Support Devices": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 3,
+        "predicted_positive": 0
+      },
+      "No Finding": {
+        "precision": 0.4583333333333333,
+        "recall": 0.6111111111111112,
+        "f1": 0.5238095238095238,
+        "support": 18,
+        "predicted_positive": 24
+      }
+    }
+  },
+  "hallucination_rate": 0.7777777777777778,
+  "ece": 0.11964285714285716,
+  "confidence_source": "none (confidence = 1.0)",
+  "lexical": {
+    "bleu_1": 0.2776010904133223,
+    "bleu_2": 0.1451460175729601,
+    "bleu_3": 0.08453908273088907,
+    "bleu_4": 0.05283744179752987,
+    "rouge_l": 0.20171432288260682
+  },
+  "latency_s_mean": 4.485575,
+  "radgraph": {
+    "radgraph_f1": 0.22129879644293213,
+    "reward_level": "partial"
+  }
+}

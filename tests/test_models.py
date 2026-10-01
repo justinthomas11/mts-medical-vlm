@@ -63,6 +63,20 @@ def test_build_query_avoids_double_period():
     assert ".." not in build_query("Chest pain.", "report_v3")
 
 
+def test_rag_query_first_layout_ends_with_instruction():
+    from src.models.prompts import RAG_CLOSING
+
+    p = rag_prompt("Indication: cough.", ["Report A."], layout="query_first")
+    assert p.startswith("Indication: cough.")
+    assert p.index("Reference report 1:\nReport A.") < p.index(RAG_CLOSING)
+    assert p.endswith(RAG_CLOSING)
+
+
+def test_rag_unknown_layout_raises():
+    with pytest.raises(ValueError):
+        rag_prompt("q", ["r"], layout="sideways")
+
+
 def test_rag_prompt_orders_context_before_query():
     p = rag_prompt("Indication: cough.", ["Report A.", "Report B."])
     assert p.startswith(RAG_HEADER)

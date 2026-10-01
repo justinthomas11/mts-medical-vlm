@@ -334,3 +334,18 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
 - Observed trade-off: explicit report formatting makes LLaVA-Med conservative (few findings, mostly "normal"), while free-form prompts elicit more true and many more false abnormal findings. The roadmap prompt detects the most abnormalities but also has the highest false-positive count; this is exactly what the hallucination rate and the S1 retrieval context are meant to expose and reduce.
 - Limitations: 40 val patients is a small sample and the macro-F1 differences are modest. The selected prompt does not produce FINDINGS/IMPRESSION formatting, which lowers lexical scores (BLEU/ROUGE-L) against formatted reference reports; CheXbert and RadGraph score clinical content and are unaffected by formatting.
 - Justification: Macro-F1 is the criterion aligned with the clinical purpose (detecting abnormalities) on a cohort where 38% of reports are "No Finding"; the selected prompt is also the one pre-specified in the roadmap, so S0 remains the planned baseline.
+
+---
+
+## Decision Record 025: RAG Prompt Layout for S1–S3 (val only)
+- Date: 2026-10-01
+- Status: Accepted (selected on val; no test-split output was scored)
+- Context: In the first S1 smoke run (DR-018 layout: header, then the 3 retrieved reports, then the query last), LLaVA-Med returned an empty report for 7 of 20 patients: it emitted a space and then the end-of-sequence token. Forcing a minimum length (`min_new_tokens`) was tried and rejected: the model then produced only newline tokens up to the length limit, so the reports stayed empty. The likely cause is that, with the retrieved reports immediately before the end of the user turn, the model treats the task as already answered.
+- Decision: Use the **query_first** layout for S1–S3: the standard query (DR-024), then the reference-report header and the 3 retrieved train reports, then a closing instruction: "Now write the findings and impression for THIS patient's chest radiograph, describing only what is visible in this image." (`src/models/prompts.py::rag_prompt`, `rag.layout` in the config).
+- Evidence (first 40 val patients by uid, 4-bit, greedy; empty / CheXbert macro-F1 / micro-F1 / RadGraph F1 / hallucination rate / ECE):
+  - S0 roadmap prompt, no retrieval (reference): 0 / 0.111 / 0.159 / 0.066 / 0.875 / 0.189
+  - context_first (original layout): 6 of 40 / 0.117 / 0.309 / 0.221 / 0.778 / 0.120
+  - query_first (selected): 0 of 40 / 0.099 / 0.337 / 0.273 / 0.818 / 0.113
+- Selection rule (stated after the val result and disclosed as such): a layout must produce a non-empty report for every patient; context_first fails this for 15% of val patients, which is a validity failure rather than a metric trade-off. query_first is also higher on micro-F1, RadGraph F1 and ECE. It is lower on macro-F1 (0.099 vs 0.117), where the gap amounts to one or two rare-label hits at n = 40, and has a higher hallucination rate (0.818 vs 0.778).
+- Observations to report: (1) both layouts show the model copying phrasing from retrieved reports, including de-identification tokens such as "[REDACTED]"; query_first shows this more (lower mean token entropy, 0.41 vs 0.75 on the first 20 patients, and higher BLEU/ROUGE-L). (2) These are val tuning numbers and not results; the S0–S3 comparison is made only on the test split.
+- Raw generations: `results/s1/generations_val_ragctx40.jsonl`, `results/s1/generations_val_ragqry40.jsonl`; scores: `results/s1/rag_layout_val/`.

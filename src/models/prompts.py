@@ -57,6 +57,19 @@ def s0_prompt(clinical_query: str) -> str:
     return str(clinical_query).strip()
 
 
-def rag_prompt(clinical_query: str, retrieved_reports: Sequence[str]) -> str:
-    blocks = [f"Reference report {i + 1}:\n{str(r).strip()}" for i, r in enumerate(retrieved_reports)]
-    return f"{RAG_HEADER}\n\n" + "\n\n".join(blocks) + f"\n\n{s0_prompt(clinical_query)}"
+RAG_CLOSING = ("Now write the findings and impression for THIS patient's chest radiograph, describing only "
+               "what is visible in this image.")
+
+# DR-025: "context_first" (original) put the retrieved reports first and the question last; on some
+# patients LLaVA-Med then ended immediately (empty report). "query_first" states the task first and
+# closes with an explicit instruction to write this patient's report.
+RAG_LAYOUTS = ("context_first", "query_first")
+
+
+def rag_prompt(clinical_query: str, retrieved_reports: Sequence[str], layout: str = "context_first") -> str:
+    blocks = "\n\n".join(f"Reference report {i + 1}:\n{str(r).strip()}" for i, r in enumerate(retrieved_reports))
+    if layout == "context_first":
+        return f"{RAG_HEADER}\n\n{blocks}\n\n{s0_prompt(clinical_query)}"
+    if layout == "query_first":
+        return f"{s0_prompt(clinical_query)}\n\n{RAG_HEADER}\n\n{blocks}\n\n{RAG_CLOSING}"
+    raise ValueError(f"Unknown RAG layout: {layout}")

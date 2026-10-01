@@ -2,7 +2,7 @@
 Prompt construction for S0 (image + indication query) and S1+ (query conditioned on
 retrieved train-split reports). Kept model-agnostic: returns the user-turn text only.
 
-Candidate query templates are compared on VAL only (src/pipeline/select_prompt.py, DR-023);
+Candidate query templates are compared on VAL only (src/pipeline/select_prompt.py, DR-024);
 the selected id is set in configs/experiment_config.yaml (vlm.prompt_template_id).
 """
 
@@ -27,6 +27,19 @@ PROMPT_TEMPLATES = {
     # Minimal explicit-format instruction.
     "report_v3": ("Write a concise chest X-ray radiology report with a FINDINGS section and an IMPRESSION "
                   "section. Indication: {indication}."),
+    # Round 2 (DR-024): explicit format without the "state normal findings" cue that made report_v2
+    # call almost every study normal; asks for abnormalities and normal statements symmetrically.
+    "report_v4": ("You are a radiologist. Write the radiology report for this frontal chest X-ray.\n"
+                  "Clinical indication: {indication}.\n"
+                  "Use exactly two sections:\n"
+                  "FINDINGS: for the heart, mediastinum, lungs, pleura and bones, describe any abnormality you "
+                  "see, or state that the structure is normal.\n"
+                  "IMPRESSION: the main diagnosis or diagnoses."),
+    # Round 2 (DR-024): format only, no checklist and no normality cue.
+    "report_v5": ("You are a radiologist. Look carefully at this frontal chest X-ray and write its report.\n"
+                  "Clinical indication: {indication}.\n"
+                  "Write a FINDINGS section describing what you observe, then an IMPRESSION section with "
+                  "your conclusion."),
 }
 
 MISSING_INDICATION = "not provided"

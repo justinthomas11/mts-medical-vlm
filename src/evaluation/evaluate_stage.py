@@ -44,6 +44,14 @@ def load_generations(path: Path) -> List[Dict]:
     return records
 
 
+def flagger_filename(generations_stem: str, split: str) -> str:
+    """review_flagger.json for full runs; review_flagger_<tag>.json for tagged (e.g. smoke) runs, so a
+    flag fitted on a smoke subset can never be applied to the full test run."""
+    tag = generations_stem.replace("generations_", "", 1)
+    tag = tag[len(split):].lstrip("_") if tag.startswith(split) else tag
+    return f"review_flagger_{tag}.json" if tag else "review_flagger.json"
+
+
 def per_report_f1(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     return np.array([example_based_f1(y_true[i:i + 1], y_pred[i:i + 1]) for i in range(len(y_true))])
 
@@ -132,7 +140,7 @@ def main():
     y_true = labels_for(load_reference_labels(ecfg), uids)
     refs = load_benchmark(dcfg).set_index("uid").loc[uids, "target_report"].fillna("").tolist()
 
-    flagger_path = path(ecfg["paths"]["results_dir"]) / "s3" / "review_flagger.json"
+    flagger_path = path(ecfg["paths"]["results_dir"]) / "s3" / flagger_filename(args.generations.stem, split)
     flagger = None
     if args.uncertainty and not args.fit_flagger:
         if not flagger_path.exists():

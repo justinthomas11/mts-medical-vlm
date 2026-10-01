@@ -13,7 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.evaluation.chexbert_scorer import CHEXBERT_LABELS
-from src.evaluation.evaluate_stage import load_generations, score_generations
+from src.evaluation.evaluate_stage import flagger_filename, load_generations, score_generations
 from src.uncertainty.consensus import ReviewFlagger
 
 CARDIO, NOFIND = CHEXBERT_LABELS.index("Cardiomegaly"), CHEXBERT_LABELS.index("No Finding")
@@ -85,6 +85,14 @@ def test_applying_a_val_flagger_does_not_refit():
     res = score_generations(recs, truth, KeywordLabeler(), use_uncertainty=True, flagger=fixed)
     assert res["review_flag"]["threshold"] == fixed.threshold
     assert "fitted_flagger" not in res
+
+
+def test_flagger_file_is_separate_for_tagged_runs():
+    """A flag fitted on val_smoke20 must be applied only to test_smoke20, never to the full test run."""
+    assert flagger_filename("generations_val", "val") == "review_flagger.json"
+    assert flagger_filename("generations_test", "test") == "review_flagger.json"
+    assert flagger_filename("generations_val_smoke20", "val") == "review_flagger_smoke20.json"
+    assert flagger_filename("generations_test_smoke20", "test") == "review_flagger_smoke20.json"
 
 
 def test_load_generations_rejects_duplicate_uids(tmp_path):

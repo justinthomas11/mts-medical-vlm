@@ -316,3 +316,21 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
   1. Keep Facies Diaphragmatica: Rejected; it is abdominal, not pleural, and inflates chance-level hits.
   2. Undilated lower third only: Rejected; fluid blunts the lung edge, so the segmented lung stops above the meniscus and true effusion saliency would fall just outside the mask.
 - Justification: Keeps the effusion target anatomically pleural and comparable in size to the other targets, preserving the non-trivial Pointing Game required by DR-016. The chance baseline (mask area fraction) is still reported for every condition.
+
+---
+
+## Decision Record 024: Query Prompt Selection for S0–S3 (val only)
+- Date: 2026-10-01
+- Status: Accepted (selected on val; no test-split output was scored)
+- Context: In the local smoke test the roadmap prompt ("Indication: …. Analyze this chest radiograph and provide detailed findings and diagnostic impression.") produced patient-education prose rather than radiology-style FINDINGS/IMPRESSION text. Prompt wording changes clinical content, so it was selected on the first 40 val patients (by uid), with LLaVA-Med in 4-bit, greedy decoding, and CheXbert scoring against the val reference labels.
+- Round 1 (criterion fixed in advance: CheXbert micro-F1 over 14 observations): `report_v2` (explicit FINDINGS/IMPRESSION with an anatomical checklist and "state normal findings when the study is normal") scored highest (micro-F1 0.351 vs 0.159 for the roadmap prompt). However, it called 36 of 40 studies normal (18 are normal) and found 0 of the 37 abnormal reference labels: its micro-F1 came almost entirely from the frequent "No Finding" label. Micro-F1 therefore rewards a near-constant "normal" output on this cohort.
+- Round 2: two further templates without the normality cue were added (`report_v4`, `report_v5`), and all five were compared on the same 40 val patients by **CheXbert macro-F1 (14)**, which weights every observation equally and so rewards detecting abnormalities. This change of criterion was made after seeing the round-1 val result and is reported as such. Results (macro-F1 / micro-F1 / correct-of-predicted abnormal labels / studies called normal / FINDINGS+IMPRESSION format rate):
+  - `baseline_v1` (roadmap prompt): 0.111 / 0.159 / 8 of 64 / 7 / 0.00
+  - `report_v2`: 0.045 / 0.351 / 0 of 6 / 36 / 0.97
+  - `report_v3`: 0.071 / 0.160 / 5 of 37 / 8 / 0.03
+  - `report_v4`: 0.079 / 0.234 / 2 of 17 / 22 / 0.95
+  - `report_v5`: 0.095 / 0.161 / 5 of 45 / 12 / 0.12
+- Decision: Use the roadmap prompt `baseline_v1` for all stages (S0–S3), built from the cleaned indication by `src/models/prompts.py::build_query` (trailing full stops are no longer doubled). Raw generations and scores: `results/prompt_selection/`.
+- Observed trade-off: explicit report formatting makes LLaVA-Med conservative (few findings, mostly "normal"), while free-form prompts elicit more true and many more false abnormal findings. The roadmap prompt detects the most abnormalities but also has the highest false-positive count; this is exactly what the hallucination rate and the S1 retrieval context are meant to expose and reduce.
+- Limitations: 40 val patients is a small sample and the macro-F1 differences are modest. The selected prompt does not produce FINDINGS/IMPRESSION formatting, which lowers lexical scores (BLEU/ROUGE-L) against formatted reference reports; CheXbert and RadGraph score clinical content and are unaffected by formatting.
+- Justification: Macro-F1 is the criterion aligned with the clinical purpose (detecting abnormalities) on a cohort where 38% of reports are "No Finding"; the selected prompt is also the one pre-specified in the roadmap, so S0 remains the planned baseline.

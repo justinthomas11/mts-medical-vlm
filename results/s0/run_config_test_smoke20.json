@@ -11,6 +11,7 @@
     "max_new_tokens": 256
   },
   "decoding_samples": null,
+  "prompt_template_id": "baseline_v1",
   "prompt_template": "Indication: {indication}. Analyze this chest radiograph and provide detailed findings and diagnostic impression.",
   "rag": null,
   "image_preprocessing": "pad-to-square (CLIP mean colour) -> CLIPImageProcessor 336px",

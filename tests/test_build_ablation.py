@@ -26,7 +26,7 @@ def _metrics(f1, rg, ece, hall, flag=None):
     return m
 
 
-LOC = {"all_positive_pairs": {"overall": {"pointing_game": 0.2, "smr": 0.1}}}
+LOC = {"all_positive_pairs": {"overall": {"pointing_game": 0.6, "smr": 0.4, "chance_area_fraction": 0.2}}}
 
 
 def test_four_stages_and_composition():
@@ -35,7 +35,7 @@ def test_four_stages_and_composition():
     assert list(t.index) == ["S0", "S1 (+RAG)", "S2 (+Grad-CAM)", "S3 (+Uncertainty)"]
     # S0/S1 have no explanation; S2/S3 share the Grad-CAM explainability
     assert t.loc["S0", "explainability"] == 0 and t.loc["S1 (+RAG)", "explainability"] == 0
-    assert t.loc["S2 (+Grad-CAM)", "explainability"] == pytest.approx(0.15)
+    assert t.loc["S2 (+Grad-CAM)", "explainability"] == pytest.approx(0.375)   # chance-corrected (DR-026)
     # S2 reuses S1 text metrics exactly
     assert t.loc["S2 (+Grad-CAM)", "chexbert_micro_f1"] == t.loc["S1 (+RAG)", "chexbert_micro_f1"]
     # S3 differs only through calibration (ECE) and the flag

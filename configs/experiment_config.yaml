@@ -50,7 +50,7 @@ evaluation:
   radgraph_reward_level: "partial"
   ece_bins: 10
 
-mts:                         # DR-021 — fixed before test results are seen
+mts:                         # DR-021 (explainability chance-corrected, DR-026) — fixed before test results are seen
   weights:
     diagnostic: 0.4
     reliability: 0.3

@@ -20,10 +20,30 @@ WEIGHTS = {"diagnostic": 0.4, "reliability": 0.3, "explainability": 0.3}
 
 def test_components_follow_dr021_definitions():
     c = mts_components(chexbert_micro_f1=0.4, radgraph_f1=0.2, ece=0.1, hallucination_rate=0.3,
-                       pointing_game=0.5, smr=0.3)
+                       pointing_game=0.6, smr=0.4, chance=0.2)
     assert c["diagnostic"] == pytest.approx(0.3)
     assert c["reliability"] == pytest.approx(0.8)
-    assert c["explainability"] == pytest.approx(0.4)
+    # DR-026: cc(0.6) = 0.4/0.8 = 0.5, cc(0.4) = 0.2/0.8 = 0.25 -> mean 0.375
+    assert c["explainability"] == pytest.approx(0.375)
+
+
+def test_chance_level_heatmaps_earn_no_explainability():
+    c = mts_components(0.4, 0.2, 0.1, 0.3, pointing_game=0.11, smr=0.10, chance=0.11)
+    assert c["explainability"] == 0.0   # below/at chance is floored at 0
+
+
+def test_chance_corrected_bounds():
+    from src.evaluation.mts import chance_corrected
+
+    assert chance_corrected(1.0, 0.3) == pytest.approx(1.0)
+    assert chance_corrected(0.3, 0.3) == 0.0
+    with pytest.raises(ValueError):
+        chance_corrected(0.5, 1.0)
+
+
+def test_explainability_requires_chance():
+    with pytest.raises(ValueError):
+        mts_components(0.4, 0.2, 0.1, 0.3, pointing_game=0.5, smr=0.3)
 
 
 def test_explainability_zero_without_visual_explanation():
@@ -37,7 +57,7 @@ def test_mts_weighted_sum():
 
 
 def test_perfect_system_scores_one():
-    c = mts_components(1.0, 1.0, 0.0, 0.0, 1.0, 1.0)
+    c = mts_components(1.0, 1.0, 0.0, 0.0, 1.0, 1.0, chance=0.1)
     assert mts(c, WEIGHTS) == pytest.approx(1.0)
 
 
@@ -54,7 +74,7 @@ def test_missing_component_raises(missing):
     with pytest.raises(ValueError):
         mts_components(0.4, missing, 0.1, 0.3)
     with pytest.raises(ValueError):
-        mts_components(0.4, 0.2, 0.1, 0.3, pointing_game=0.5, smr=missing)
+        mts_components(0.4, 0.2, 0.1, 0.3, pointing_game=0.5, smr=missing, chance=0.1)
 
 
 def test_config_weights_are_valid():

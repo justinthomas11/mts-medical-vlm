@@ -116,7 +116,7 @@ TrustMedicalVLM/
 │   ├── raw/                     # Raw IU X-Ray CSVs and images (git-ignored)
 │   └── processed/               # Processed master CSV, label matrix, splits manifest (git-ignored)
 ├── docs/
-│   ├── decision_log.md          # Architecture and engineering decision records (DR-001 to DR-025)
+│   ├── decision_log.md          # Architecture and engineering decision records (DR-001 to DR-026)
 │   └── data_card.md             # Standardized dataset documentation card
 ├── notebooks/
 │   └── kaggle_s0_s3_generation.ipynb  # FP16 generation for the final S0-S3 runs (Kaggle, 2x T4)

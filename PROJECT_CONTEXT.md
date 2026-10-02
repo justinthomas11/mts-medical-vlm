@@ -77,7 +77,7 @@ flowchart LR
 
 ---
 
-## 4. Comprehensive Decision Log (DR-001 through DR-025)
+## 4. Comprehensive Decision Log (DR-001 through DR-026)
 
 Every engineering and clinical choice is formally documented in `docs/decision_log.md`:
 
@@ -108,6 +108,7 @@ Every engineering and clinical choice is formally documented in `docs/decision_l
 | **DR-023** | Effusion Target Correction | Accepted | Pleural Effusion target = dilated lower third of lungs; PSPNet Facies Diaphragmatica dropped because it marks the sub-diaphragmatic abdomen (amends DR-019; found on train/val). |
 | **DR-024** | Prompt Selection (val) | Accepted | Roadmap prompt kept for S0–S3 after a 5-template val comparison; micro-F1 favoured an always-'normal' prompt, so selection used CheXbert macro-F1 (criterion change disclosed). |
 | **DR-025** | RAG Prompt Layout (val) | Accepted | Query first, retrieved reports, then an explicit write-this-report instruction; the original layout returned empty reports for 15% of val patients. |
+| **DR-026** | Chance-Corrected Explainability | Accepted | MTS explainability = mean of chance-corrected Pointing Game and SMR, so chance-level heatmaps add ~0 (amends DR-021; fixed before test). |
 
 ---
 
@@ -252,7 +253,7 @@ TrustMedicalVLM/
 │   └── experiment_config.yaml     # VLM id, prompt (DR-024), RAG k/alpha/layout (DR-018/025), Grad-CAM head,
 │                                  # uncertainty (DR-015/020), MTS weights (DR-021)
 ├── data/raw, data/processed/      # git-ignored; processed data is rebuilt by src/data/split_dataset.py
-├── docs/decision_log.md           # DR-001 … DR-025
+├── docs/decision_log.md           # DR-001 … DR-026
 ├── notebooks/kaggle_s0_s3_generation.ipynb   # FP16 generation for the final runs (Kaggle, 2x T4)
 ├── reports/                       # Data audit, labeler validation, figures (incl. gradcam_val_examples.png)
 ├── results/
@@ -302,7 +303,7 @@ only when `RADGRAPH_PYTHON` is set.
 | 4. S1 | Train-only hybrid retriever (CLIP image + MedCPT text, alpha = 0.5 on val, DR-018); query-first RAG layout (DR-025); smoke-tested |
 | 5. S2 | Head on frozen CLIP layer −2 tokens (train only); val localization done; effusion target corrected (DR-023) |
 | 6. S3 | Entropy + 5-sample CheXbert agreement; review flag (20% val budget) fitted on a 20-patient val smoke run |
-| 7. MTS + ablation | Weights fixed (0.4 / 0.3 / 0.3, DR-021); table builder and paired bootstrap CIs done; end-to-end dry run on val smoke data |
+| 7. MTS + ablation | Weights fixed (0.4 / 0.3 / 0.3, DR-021); explainability chance-corrected (DR-026); table builder and paired bootstrap CIs done; end-to-end dry run on val smoke data |
 
 ### 10.2 Val findings so far (tuning data — not results)
 - Prompt (40 val): explicit FINDINGS/IMPRESSION prompts made LLaVA-Med call most studies normal (one found 0 of 37 abnormal labels); the roadmap prompt had the best macro-F1 (0.111).

@@ -350,3 +350,15 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
 - Observations to report: (1) both layouts show the model copying phrasing from retrieved reports, including de-identification tokens such as "[REDACTED]"; query_first shows this more (lower mean token entropy, 0.41 vs 0.75 on the first 20 patients, and higher BLEU/ROUGE-L). (2) These are val tuning numbers and not results; the S0–S3 comparison is made only on the test split.
 - Raw generations: `results/s1/generations_val_ragctx40.jsonl`, `results/s1/generations_val_ragqry40.jsonl`; scores: `results/s1/rag_layout_val/`.
 - Addendum (2026-10-02, measured with `src/evaluation/nlg_metrics.py::copy_overlap` on the same 40 val patients): mean share of a report's word 4-grams found verbatim in its closest retrieved report — S0 (never shown the retrieved reports; chance baseline) 0.002, context_first 0.237, query_first 0.601; reports with more than half of their 4-grams copied — 0, 7 and 21 of 40. The query_first layout therefore avoids empty reports largely by copying retrieved text, and its higher val micro-F1 and RadGraph F1 may reflect that copying. Copy overlap is now reported for every RAG stage so this can be assessed on test.
+
+---
+
+## Decision Record 026: Chance-Corrected Explainability in the MTS (amends DR-021)
+- Date: 2026-10-02
+- Status: Accepted (decided by the author before any test-split generation or metric was computed)
+- Context: DR-021 set Explainability E = mean(Pointing Game, SMR), with E = 0 for stages without a visual explanation. Val localization (DR-023) is at chance level overall (Pointing Game 0.153, SMR 0.110, mean target area 0.109), yet under DR-021 such heatmaps still add about 0.3 x 0.13 to the MTS, so the score would reward producing a heatmap rather than a useful one.
+- Decision: E = mean(cc(Pointing Game), cc(SMR)), with cc(x) = max(0, (x - c) / (1 - c)) and c the mean target-mask area fraction over the evaluated (patient, condition) pairs, i.e. the score of a uniform heatmap. cc is 0 at or below chance and 1 for perfect localization. E = 0 is kept for S0 and S1. Weights (0.4 / 0.3 / 0.3) and the D and R components are unchanged. The chance level is reported in the ablation table (`localization_chance`).
+- Alternatives Considered:
+  1. Keep DR-021: Rejected; chance-level saliency would raise S2 and S3 MTS without any localization ability.
+  2. Per-condition correction weighted by pair counts: Rejected for simplicity; conditions with very few pairs (e.g. 3 Pneumothorax test cases) would carry unstable chance estimates.
+- Justification: A kappa-style correction is a standard way to remove chance agreement, keeps E in [0, 1], and makes the explainability axis measure localization above chance, which is what DR-016 intends to evaluate.

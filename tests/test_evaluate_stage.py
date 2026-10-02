@@ -47,6 +47,14 @@ def test_no_samples_scores_confidence_one():
     assert "review_flag" not in res
 
 
+def test_empty_reports_are_counted_and_scored_as_empty():
+    recs = [{"uid": 1, "generated_report": ""}, {"uid": 2, "generated_report": "  \n"},
+            {"uid": 3, "generated_report": "heart enlarged"}, {"uid": 4, "generated_report": "normal"}]
+    res = score_generations(recs, _truth("ccnn"), KeywordLabeler())
+    assert res["empty_report_rate"] == pytest.approx(0.5)
+    assert res["n_reports"] == 4   # empty reports stay in the denominator
+
+
 def _uncertain_records():
     recs = []
     for uid in range(20):

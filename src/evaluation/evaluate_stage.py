@@ -65,6 +65,8 @@ def score_generations(records: List[Dict], y_true: np.ndarray, labeler, ece_bins
     f1_each = per_report_f1(y_true, y_pred)
 
     out = {"n_reports": len(records),
+           # Empty reports are scored as-is (CheXbert gives an empty label vector) and reported (DR-025).
+           "empty_report_rate": float(np.mean([not h.strip() for h in hyps])),
            "clinical": clinical_efficacy(y_true, y_pred),
            "hallucination_rate": hallucination_rate(y_true, y_pred),
            "y_pred": y_pred, "per_report": pd.DataFrame({"uid": [r["uid"] for r in records], "example_f1": f1_each})}
@@ -156,7 +158,8 @@ def main():
     hyps = [r["generated_report"] for r in records]
     metrics = {"generations": str(args.generations.relative_to(PROJECT_ROOT) if args.generations.is_absolute()
                                   else args.generations),
-               "split": split, "n_reports": res["n_reports"], "clinical": res["clinical"],
+               "split": split, "n_reports": res["n_reports"], "empty_report_rate": res["empty_report_rate"],
+               "clinical": res["clinical"],
                "hallucination_rate": res["hallucination_rate"], "ece": res["ece"],
                "confidence_source": res["confidence_source"], "lexical": lexical_metrics(refs, hyps)}
     for key in ("latency_s_mean", "uncertainty_summary", "review_flag"):

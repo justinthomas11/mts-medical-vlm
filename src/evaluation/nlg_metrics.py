@@ -25,6 +25,23 @@ def tokenize_report(text: str) -> str:
     return " ".join(_TOKEN_RE.findall(text))
 
 
+def _ngrams(tokens: List[str], n: int) -> List[tuple]:
+    return [tuple(tokens[i:i + n]) for i in range(len(tokens) - n + 1)]
+
+
+def copy_overlap(generated: str, sources: Sequence[str], n: int = 4) -> float:
+    """Share of the generated report's word n-grams found verbatim in its closest source report
+    (max over sources). 0 when the report has fewer than n tokens or there are no sources."""
+    gen = _ngrams(tokenize_report(generated).split(), n)
+    if not gen or not sources:
+        return 0.0
+    best = 0.0
+    for src in sources:
+        pool = set(_ngrams(tokenize_report(src).split(), n))
+        best = max(best, sum(g in pool for g in gen) / len(gen))
+    return best
+
+
 def lexical_metrics(refs: Sequence[str], hyps: Sequence[str]) -> Dict[str, float]:
     from pycocoevalcap.bleu.bleu import Bleu
     from pycocoevalcap.rouge.rouge import Rouge

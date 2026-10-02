@@ -58,8 +58,14 @@ def per_report_f1(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
 
 def score_generations(records: List[Dict], y_true: np.ndarray, labeler, ece_bins: int = 10,
                       use_uncertainty: bool = False, flagger: Optional[ReviewFlagger] = None,
-                      fit_flagger_budget: Optional[float] = None) -> Dict:
-    """Core scoring (no file I/O, no RadGraph). `labeler.label(texts)` -> (N, 14) binary array."""
+                      fit_flagger_budget: Optional[float] = None,
+                      retrieved_texts: Optional[List[List[str]]] = None) -> Dict:
+    """Core scoring (no file I/O, no RadGraph). `labeler.label(texts)` -> (N, 14) binary array.
+
+    `retrieved_texts[i]` (S1+ only) are the reports shown to the model for record i; used to measure
+    how much of the output is copied verbatim from them (4-gram copy overlap)."""
+    from src.evaluation.nlg_metrics import copy_overlap
+
     hyps = [r["generated_report"] for r in records]
     y_pred = np.asarray(labeler.label(hyps), dtype=np.int8)
     f1_each = per_report_f1(y_true, y_pred)
@@ -72,6 +78,11 @@ def score_generations(records: List[Dict], y_true: np.ndarray, labeler, ece_bins
            "y_pred": y_pred, "per_report": pd.DataFrame({"uid": [r["uid"] for r in records], "example_f1": f1_each})}
     if "latency_s" in records[0]:
         out["latency_s_mean"] = float(np.mean([r["latency_s"] for r in records]))
+    if retrieved_texts is not None:
+        overlap = np.array([copy_overlap(h, src) for h, src in zip(hyps, retrieved_texts)])
+        out["per_report"]["copy_overlap_4gram"] = overlap
+        out["copy_overlap"] = {"mean_4gram": float(overlap.mean()),
+                               "share_over_half_copied": float((overlap > 0.5).mean())}
 
     correct = (y_pred == y_true)
     has_samples = use_uncertainty and all(r.get("samples") for r in records)
@@ -140,7 +151,11 @@ def main():
 
     uids = [r["uid"] for r in records]
     y_true = labels_for(load_reference_labels(ecfg), uids)
-    refs = load_benchmark(dcfg).set_index("uid").loc[uids, "target_report"].fillna("").tolist()
+    all_reports = load_benchmark(dcfg).set_index("uid")["target_report"].fillna("")
+    refs = all_reports.loc[uids].tolist()
+    retrieved_texts = None
+    if any(r.get("retrieved_uids") for r in records):
+        retrieved_texts = [all_reports.loc[r.get("retrieved_uids", [])].tolist() for r in records]
 
     flagger_path = path(ecfg["paths"]["results_dir"]) / "s3" / flagger_filename(args.generations.stem, split)
     flagger = None
@@ -153,7 +168,8 @@ def main():
     labeler = CheXbertLabeler(batch_size=ecfg["evaluation"]["batch_size"])
     res = score_generations(records, y_true, labeler, ece_bins=ecfg["evaluation"]["ece_bins"],
                             use_uncertainty=args.uncertainty, flagger=flagger,
-                            fit_flagger_budget=ecfg["uncertainty"]["review_budget"] if args.fit_flagger else None)
+                            fit_flagger_budget=ecfg["uncertainty"]["review_budget"] if args.fit_flagger else None,
+                            retrieved_texts=retrieved_texts)
 
     hyps = [r["generated_report"] for r in records]
     metrics = {"generations": str(args.generations.relative_to(PROJECT_ROOT) if args.generations.is_absolute()
@@ -162,7 +178,7 @@ def main():
                "clinical": res["clinical"],
                "hallucination_rate": res["hallucination_rate"], "ece": res["ece"],
                "confidence_source": res["confidence_source"], "lexical": lexical_metrics(refs, hyps)}
-    for key in ("latency_s_mean", "uncertainty_summary", "review_flag"):
+    for key in ("latency_s_mean", "copy_overlap", "uncertainty_summary", "review_flag"):
         if key in res:
             metrics[key] = res[key]
     if not args.skip_radgraph:

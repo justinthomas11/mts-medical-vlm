@@ -42,6 +42,7 @@ def stage_row(stage: str, m: Dict, loc: Optional[Dict], weights: Dict[str, Dict[
         "chexbert5_micro_f1": m["clinical"]["micro_5"]["f1"], "radgraph_f1": m["radgraph"]["radgraph_f1"],
         "hallucination_rate": m["hallucination_rate"], "ece": m["ece"],
         "empty_report_rate": m.get("empty_report_rate"),
+        "copy_overlap_4gram": m.get("copy_overlap", {}).get("mean_4gram"),
         "pointing_game": pg, "smr": smr,
         "review_flag_rate": m.get("review_flag", {}).get("flag_rate"),
         "micro_f1_unflagged": m.get("review_flag", {}).get("micro_f1_unflagged"),

@@ -1,0 +1,24 @@
+# Main environment (Python 3.12). Versions used for all local development and smoke tests.
+# torch/torchvision CUDA build: pip install torch==2.14.0 torchvision==0.29.0 --index-url https://download.pytorch.org/whl/cu130
+torch==2.14.0
+torchvision==0.29.0
+transformers==5.17.0
+accelerate==1.15.0
+bitsandbytes==0.50.2          # 4-bit loading on the 6 GB local GPU (not needed for FP16 on Kaggle)
+huggingface_hub==1.32.0
+safetensors==0.8.0
+f1chexbert==0.0.2             # CheXbert model definition (weights: StanfordAIMI/RRG_scorers)
+appdirs==1.4.4                # imported by f1chexbert
+torchxrayvision==1.5.4        # ChestX-Det PSPNet anatomical masks (S2)
+pycocoevalcap==1.2            # BLEU / ROUGE-L
+faiss-cpu==1.15.1             # optional: retriever falls back to exact NumPy search (DR-022)
+numpy==2.5.2
+pandas==2.3.3
+scipy==1.18.0
+scikit-learn==1.9.0
+pillow==12.3.0
+PyYAML==6.0.3
+matplotlib==3.11.1
+seaborn==0.13.2
+pytest==9.1.1
+# RadGraph F1 needs transformers<5 and runs in its own venv: see requirements-radgraph.txt (DR-022).

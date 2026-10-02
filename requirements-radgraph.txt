@@ -1,0 +1,7 @@
+# Separate venv for RadGraph F1 (its bundled AllenNLP code needs transformers < 5; DR-022).
+#   python -m venv ~/.venvs/radgraph
+#   ~/.venvs/radgraph/Scripts/python -m pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu
+#   ~/.venvs/radgraph/Scripts/python -m pip install -r requirements-radgraph.txt
+# then set RADGRAPH_PYTHON to that interpreter before running src/evaluation/evaluate_stage.py.
+radgraph==0.1.18
+transformers==4.57.6

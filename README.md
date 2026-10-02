@@ -110,32 +110,29 @@ Data is split strictly at the **patient level** (`uid`) with zero patient overla
 ```text
 TrustMedicalVLM/
 ├── configs/
-│   └── data_config.yaml         # Central YAML configuration for paths, seed, splits, ontology
+│   ├── data_config.yaml         # Paths, seed, splits, ontology
+│   └── experiment_config.yaml   # Model, prompt, decoding, RAG, Grad-CAM, uncertainty, MTS weights
 ├── data/
-│   ├── raw/                     # Raw IU X-Ray CSVs and images (images ignored by git)
-│   └── processed/               # Processed master CSV, label matrix, splits manifest, summary
+│   ├── raw/                     # Raw IU X-Ray CSVs and images (git-ignored)
+│   └── processed/               # Processed master CSV, label matrix, splits manifest (git-ignored)
 ├── docs/
-│   ├── decision_log.md          # Architecture and engineering decision records (001-012)
+│   ├── decision_log.md          # Architecture and engineering decision records (DR-001 to DR-025)
 │   └── data_card.md             # Standardized dataset documentation card
-├── notebooks/                   # Exploratory analysis notebooks
-├── reports/
-│   ├── data_audit.md            # Comprehensive empirical data audit report
-│   ├── audit_metrics.json       # Exact numerical metrics calculated from raw data
-│   └── figures/                 # Diagnostic audit figures (PNG)
+├── notebooks/
+│   └── kaggle_s0_s3_generation.ipynb  # FP16 generation for the final S0-S3 runs (Kaggle, 2x T4)
+├── reports/                     # Data audit report, labeler validation, figures
+├── results/                     # Raw outputs + metrics per stage (labels/, prompt_selection/, s0/, s1/, s2/, s3/, ablation/)
 ├── src/
-│   ├── __init__.py
-│   └── data/
-│       ├── __init__.py
-│       ├── audit.py             # Deterministic data audit script
-│       ├── clean_reports.py     # Text cleaning and de-identification normalization
-│       ├── label_derivation.py  # Negation-aware multi-label pathology extraction
-│       ├── transforms.py        # Model-agnostic image letterboxing and PyTorch dataset
-│       └── split_dataset.py     # Master preprocessing and patient-level splitting
-├── tests/
-│   ├── test_linkage.py          # Verifies image existence and PIL readability
-│   ├── test_splits.py           # Asserts zero patient leakage across train/val/test
-│   └── test_transforms.py       # Tests image transform shapes, dtypes, and ranges
-├── .gitignore                   # Ignores large raw images, models, checkpoints, caches
+│   ├── data/                    # Audit, cleaning, label derivation, splitting, transforms
+│   ├── models/                  # LLaVA-Med loader/generator, CLIP vision tower, prompts
+│   ├── rag/                     # MedCPT text encoder, train-only hybrid retriever
+│   ├── xai/                     # Grad-CAM head, Grad-CAM, anatomical targets, Pointing Game / SMR
+│   ├── uncertainty/             # Sample consensus, ECE, review flag
+│   ├── evaluation/              # CheXbert, BLEU/ROUGE/RadGraph, stage scorer, MTS, ablation, bootstrap CIs
+│   └── pipeline/                # Runnable steps: features, RAG, generation, head training, localization
+├── tests/                       # pytest suite (run before every commit)
+├── requirements.txt             # Main environment
+├── requirements-radgraph.txt    # Separate venv for RadGraph F1 (transformers < 5)
 └── README.md
 ```
 
@@ -156,11 +153,41 @@ python src/data/split_dataset.py
 ```
 
 ### 3. Run Automated Test Suite
-To verify zero leakage, image linkages, and transform correctness:
 ```bash
 python -m pytest tests/ -v
 ```
-All 11 unit tests pass with zero warnings or errors.
+
+---
+
+## Running Phase II (S0–S3)
+
+Setup: `pip install -r requirements.txt` (CUDA torch as noted in the file); RadGraph in its own venv per
+`requirements-radgraph.txt`, with `RADGRAPH_PYTHON` pointing to it.
+
+**Locally (train/val work, 4-bit smoke tests on ≤ 20 patients):**
+```bash
+python src/evaluation/label_references.py      # CheXbert labels for all reference reports
+python src/pipeline/extract_features.py        # LLaVA-Med CLIP + MedCPT features
+python src/pipeline/build_rag.py               # train-only index, alpha tuned on val
+python src/pipeline/train_xai_head.py          # Grad-CAM head (train), thresholds (val)
+python src/pipeline/eval_localization.py --split val
+python src/pipeline/run_generation.py --stage s1 --split val --limit 20 --samples 5 --tag smoke20
+```
+
+**Final generation (Kaggle, FP16):** run `notebooks/kaggle_s0_s3_generation.ipynb`. It rebuilds the
+processed data, stops unless the split matches the committed one, and generates S0 (test), S1 + 5 samples
+(val, for the review flag) and S1 + 5 samples (test).
+
+**Scoring (locally, after downloading the Kaggle outputs):**
+```bash
+python src/evaluation/evaluate_stage.py results/s0/generations_test.jsonl
+python src/evaluation/evaluate_stage.py results/s1/generations_test.jsonl
+python src/evaluation/evaluate_stage.py results/s1/generations_val.jsonl --uncertainty --fit-flagger
+python src/evaluation/evaluate_stage.py results/s1/generations_test.jsonl --uncertainty
+python src/pipeline/eval_localization.py --split test
+python src/evaluation/build_ablation.py --split test
+python src/evaluation/bootstrap_ci.py --split test
+```
 
 ---
 
@@ -168,13 +195,13 @@ All 11 unit tests pass with zero warnings or errors.
 
 - [x] Phase I: literature review, problem statement, objectives, methodology
 - [x] Dataset audit and preprocessing (IU X-Ray)
-- [ ] Base VLM selection (candidates: LLaVA-Med, CheXagent)
-- [ ] S0: baseline VLM inference + MTS
-- [ ] S1: RAG integration + MTS
-- [ ] S2: Grad-CAM integration + MTS
-- [ ] S3: uncertainty estimation + MTS
-- [ ] Result analysis and ablation tables
-- [ ] Publication
+- [x] Base VLM: LLaVA-Med v1.5 (Mistral-7B, CLIP ViT-L/14-336), 4-bit local / FP16 cloud (DR-022)
+- [x] Evaluation stack: CheXbert, BLEU/ROUGE-L, RadGraph, hallucination, ECE, MTS, bootstrap CIs
+- [x] S0–S3 implemented; prompt and RAG layout selected on val (DR-024, DR-025); smoke-tested on 20 patients
+- [x] S2 Grad-CAM head trained (train) and localization evaluated on val
+- [ ] Final FP16 generation on the 734 test patients (Kaggle)
+- [ ] Final S0–S3 ablation table and MTS on test
+- [ ] Result analysis and publication
 
 ---
 
@@ -183,6 +210,9 @@ All 11 unit tests pass with zero warnings or errors.
 - Single dataset (IU X-Ray, chest X-rays only), so generalization to other modalities is not claimed.
 - IU X-Ray has no gold diagnostic labels or bounding boxes. Labels are derived from reports via clinical rules, and localization evaluation uses anatomical priors and Pointing Game metrics.
 - Automated clinical validity is evaluated via standardized clinical NLP metrics (RadGraph entity/relation agreement and CheXbert diagnostic label concordance).
+- The LLaVA-Med checkpoint is a community Hugging Face conversion of the official release (DR-022). Prompt and RAG choices were tuned in 4-bit on 40 val patients; final runs use FP16.
+- Grad-CAM explains the frozen vision encoder through a separate head, not the language model's reasoning (DR-016). Ribs are not segmented, so rib fractures fall outside the bony-thorax target (DR-019).
+- With retrieval, LLaVA-Med copies substantial text from the retrieved reports; copy overlap is reported for every RAG stage (DR-025).
 
 ---
 

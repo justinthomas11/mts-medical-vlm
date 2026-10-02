@@ -16,7 +16,7 @@
 - **Project Status:** 
   - **Phase I (Problem Definition & Literature Review):** Complete (30+ papers analyzed; gap identified: no existing work integrates RAG, Grad-CAM, and Uncertainty Estimation under a unified composite evaluation score).
   - **Phase II (Empirical Data Audit, Preprocessing, Splitting & Validation):** 100% Complete and verified via automated test suite.
-  - **Phase III (VLM Baseline Selection, S0-S3 Implementation & Evaluation):** In progress.
+  - **Phase III (VLM Baseline Selection, S0-S3 Implementation & Evaluation):** S0–S3 implemented, val-tuned and smoke-tested; final FP16 test-split runs pending (see Section 10).
 - **Clinical Disclaimer:** Research prototype only. Not an FDA/CE-cleared medical device; not approved for clinical decision-making.
 
 ---
@@ -245,127 +245,74 @@ Documented in `reports/labeler_validation_100.md` via `src/data/validate_labeler
 
 ## 8. Repository Layout & File Manifest
 
-The workspace is organized as follows:
-
 ```text
 TrustMedicalVLM/
 ├── configs/
-│   └── data_config.yaml         # Central configuration for paths, seed, view policy, ontology
-├── data/
-│   ├── raw/
-│   │   ├── indiana_reports.csv      # 3,851 raw radiology reports
-│   │   ├── indiana_projections.csv  # 7,466 image projection mappings
-│   │   └── images/
-│   │       └── images_normalized/   # 7,470 physical 8-bit grayscale PNG radiographs (git-ignored)
-│   └── processed/
-│       ├── iu_xray_processed.csv    # Master cleaned dataset (3,851 rows, text, views, splits, labels)
-│       ├── label_matrix.csv         # Multi-label binary ground truth matrix (14 diseases + abnormal)
-│       ├── splits_manifest.json     # Cryptographic manifest with SHA256 hashes per primary image
-│       └── splits_summary.csv       # Summary table of patient counts and disease prevalence by split
-├── docs/
-│   ├── decision_log.md          # Formal engineering and clinical decision records (DR-001 - DR-025)
-│   └── data_card.md             # Standardized dataset documentation card
-├── reports/
-│   ├── data_audit.md            # Empirical audit report across all 3,851 patients and 7,470 images
-│   ├── audit_metrics.json       # Exact numerical metrics calculated from raw data
-│   ├── labeler_validation_100.md# 100-sample validation study analyzing labeler errors
-│   └── figures/
-│       ├── views_distribution.png   # Projection and patient view distributions
-│       ├── image_stats.png          # Image resolution and intensity histograms
-│       ├── text_lengths.png         # Findings and Impression word length distributions
-│       └── label_distribution.png   # Frequency of top NLM MeSH and Problems concepts
+│   ├── data_config.yaml           # Paths, seed (42), splits, ontology
+│   └── experiment_config.yaml     # VLM id, prompt (DR-024), RAG k/alpha/layout (DR-018/025), Grad-CAM head,
+│                                  # uncertainty (DR-015/020), MTS weights (DR-021)
+├── data/raw, data/processed/      # git-ignored; processed data is rebuilt by src/data/split_dataset.py
+├── docs/decision_log.md           # DR-001 … DR-025
+├── notebooks/kaggle_s0_s3_generation.ipynb   # FP16 generation for the final runs (Kaggle, 2x T4)
+├── reports/                       # Data audit, labeler validation, figures (incl. gradcam_val_examples.png)
+├── results/
+│   ├── labels/                    # CheXbert labels of all 3,666 reference reports
+│   ├── prompt_selection/          # 5 prompt templates x 40 val patients (DR-024)
+│   ├── s0/, s1/                   # generations (JSONL), run configs, CheXbert vectors, per-report scores, metrics
+│   ├── s2/                        # head training summary, val localization (Pointing Game / SMR)
+│   ├── s3/                        # review-flag fits (val only)
+│   ├── ablation/                  # S0–S3 tables + bootstrap CIs
+│   └── features/                  # cached CLIP / MedCPT features (git-ignored, ~4.3 GB)
 ├── src/
-│   ├── __init__.py
-│   └── data/
-│       ├── __init__.py
-│       ├── audit.py             # Deterministic data audit script
-│       ├── clean_reports.py     # De-identification normalization & target construction
-│       ├── label_derivation.py  # 14-disease regex labeler with sentence negation
-│       ├── split_dataset.py     # Master preprocessing, stratified splitting, manifest builder
-│       ├── transforms.py        # Aspect-ratio letterboxing, normalization, PyTorch Dataset
-│       └── validate_labeler.py  # 100-sample labeler validation runner
-├── tests/
-│   ├── test_linkage.py          # Verifies image existence on disk, PIL readability, secondary links
-│   ├── test_splits.py           # Asserts zero patient leakage, 70/10/20 proportions, strat balance
-│   └── test_transforms.py       # Tests letterboxing, tensor shapes, dtypes, and dataset item loading
-├── .gitignore                   # Ignores large raw images, models, checkpoints, caches
-├── PROJECT_CONTEXT.md           # Exhaustive project context document (this file)
-└── README.md                    # Primary repository overview
+│   ├── data/                      # audit, cleaning, rule labeler (splitting/audit only), splitting, transforms
+│   ├── models/                    # llava_med.py (4-bit/FP16, entropy, sampling), vision_encoder.py, prompts.py
+│   ├── rag/                       # MedCPT encoders, train-only hybrid retriever (FAISS or exact NumPy)
+│   ├── xai/                       # Grad-CAM head, Grad-CAM, anatomical targets, Pointing Game / SMR
+│   ├── uncertainty/               # sample agreement, ECE, val-fitted review flag, risk–coverage
+│   ├── evaluation/                # CheXbert scorer, clinical metrics, BLEU/ROUGE/RadGraph, copy overlap,
+│   │                              # stage scorer, MTS, ablation builder, paired bootstrap CIs
+│   └── pipeline/                  # label/feature extraction, RAG build, generation, head training,
+│                                  # localization, prompt selection, split verification, figures
+├── tests/                         # pytest suite — must pass before every commit
+├── requirements.txt, requirements-radgraph.txt
+└── README.md                      # includes the full Phase II run guide
 ```
 
 ---
 
-## 9. Automated Unit Test Suite
+## 9. Automated Test Suite
 
-The test suite is located in `tests/` and run with `pytest -v`. All 11 unit tests pass cleanly:
-
-```text
-tests/test_linkage.py::test_primary_image_linkage PASSED                 [  9%]
-tests/test_linkage.py::test_image_readability_sample PASSED              [ 18%]
-tests/test_linkage.py::test_no_broken_secondary_links PASSED             [ 27%]
-tests/test_splits.py::test_zero_patient_leakage PASSED                   [ 36%]
-tests/test_splits.py::test_split_proportions PASSED                      [ 45%]
-tests/test_splits.py::test_stratification_balance PASSED                 [ 54%]
-tests/test_splits.py::test_manifest_consistency PASSED                   [ 63%]
-tests/test_transforms.py::test_resize_with_aspect_ratio PASSED           [ 72%]
-tests/test_transforms.py::test_standard_resize PASSED                    [ 81%]
-tests/test_transforms.py::test_transform_pipeline_tensor_output PASSED   [ 90%]
-tests/test_transforms.py::test_dataset_item_loading PASSED               [100%]
-============================= 11 passed in 45.13s =============================
-```
-
-### What Each Test Verifies:
-1. `test_primary_image_linkage`: Iterates through all 3,666 benchmark records across `train`, `val`, and `test` to guarantee that every assigned primary image physically exists on disk.
-2. `test_image_readability_sample`: Opens 50 sampled radiographs with PIL, confirming dimensions ($>500\times 500$) and grayscale mode (`L`).
-3. `test_no_broken_secondary_links`: Validates that secondary image files (for multi-image studies) exist on disk.
-4. `test_zero_patient_leakage`: Enforces hard set intersection: $\text{train} \cap \text{val} = \emptyset$, $\text{train} \cap \text{test} = \emptyset$, and $\text{val} \cap \text{test} = \emptyset$.
-5. `test_split_proportions`: Validates benchmark ratios fall within expected bounds: Train $\approx 70\%$, Val $\approx 10\%$, Test $\approx 20\%$.
-6. `test_stratification_balance`: Asserts that abnormal diagnosis rates across partitions remain balanced within a strict 3% margin ($\approx 64\%$).
-7. `test_manifest_consistency`: Checks that `data/processed/splits_manifest.json` patient counts exactly match `iu_xray_processed.csv`.
-8. `test_resize_with_aspect_ratio`: Tests letterbox padding logic to ensure images are not stretched or distorted.
-9. `test_standard_resize`: Verifies standard direct resize output size.
-10. `test_transform_pipeline_tensor_output`: Verifies `MedicalImageTransform` outputs a 3-channel PyTorch `torch.float32` tensor shaped `(3, H, W)` with ImageNet normalization.
-11. `test_dataset_item_loading`: Instantiates `IUXRayDataset` and verifies dictionary structure (`uid`, `image`, `query`, `target_report`, `is_abnormal`).
+`python -m pytest tests/ -v` covers data linkage and leakage (zero shared `uid`s), transforms, CheXbert
+binarisation and clinical metrics, BLEU/ROUGE/RadGraph/copy overlap, prompts and RAG layouts, the retriever
+(including a train-only assertion on the saved retrieval files), the Grad-CAM head / Grad-CAM / anatomical
+targets / localization metrics, uncertainty and the review flag, the stage scorer, MTS (including the config
+weights), the ablation builder, bootstrap CIs, the Kaggle notebook and split verification. RadGraph's test runs
+only when `RADGRAPH_PYTHON` is set.
 
 ---
 
-## 10. Immediate Next Steps & Phase III Roadmap
+## 10. Phase III Status (as of 2026-10-02)
 
-With Phase II data auditing, preprocessing, and splitting 100% complete and verified, the next implementation milestones are:
+### 10.1 Built and verified
+| Roadmap step | Status |
+|---|---|
+| 1. LLaVA-Med | `chaoyinshe/llava-med-v1.5-mistral-7b-hf` (HF conversion, DR-022); 4-bit locally (~4.3 GB VRAM), FP16 on Kaggle |
+| 2. CheXbert + clinical metrics | Done; all 3,666 reference reports labelled (`results/labels/`) |
+| 3. S0 | Prompt selected on val (DR-024: roadmap prompt kept, by macro-F1); 20-patient smoke tests on val and test |
+| 4. S1 | Train-only hybrid retriever (CLIP image + MedCPT text, alpha = 0.5 on val, DR-018); query-first RAG layout (DR-025); smoke-tested |
+| 5. S2 | Head on frozen CLIP layer −2 tokens (train only); val localization done; effusion target corrected (DR-023) |
+| 6. S3 | Entropy + 5-sample CheXbert agreement; review flag (20% val budget) fitted on a 20-patient val smoke run |
+| 7. MTS + ablation | Weights fixed (0.4 / 0.3 / 0.3, DR-021); table builder and paired bootstrap CIs done; end-to-end dry run on val smoke data |
 
-### Step 1: Base VLM Selection & Environment Setup
-- **Candidate Architectures:**
-  - **LLaVA-Med** (Microsoft / UW): 7B multimodal model based on CLIP ViT-L/14 vision encoder and Vicuna/LLaMA language backbone fine-tuned on PubMed biomedical image-text pairs.
-  - **CheXagent** (Stanford AIMI): 8B chest X-ray specialized VLM based on Clinical-LLaMA and a specialized visual encoder.
-- **Inference Setup:** Implement local 4-bit / 8-bit quantized baseline loading (`bitsandbytes`) for local testing on RTX 3050 (6 GB VRAM), or cloud GPU pipeline script for unquantized evaluation.
+### 10.2 Val findings so far (tuning data — not results)
+- Prompt (40 val): explicit FINDINGS/IMPRESSION prompts made LLaVA-Med call most studies normal (one found 0 of 37 abnormal labels); the roadmap prompt had the best macro-F1 (0.111).
+- RAG (40 val): the original layout produced empty reports for 15% of patients; the chosen query-first layout produced none but copies heavily from retrieved reports (mean 4-gram copy overlap 0.60 vs 0.002 for S0).
+- Grad-CAM head: val macro AUROC 0.745 (best epoch 17).
+- Localization (366 val, 124 positive pairs): overall Pointing Game 0.153 and SMR 0.110 against a chance area of 0.109 — chance level overall; only Pleural Effusion is clearly above chance (Pointing Game 0.632 vs chance 0.197).
 
-### Step 2: Establish Symmetric CheXbert Scoring Environment (DR-013)
-- Download pretrained Stanford CheXbert model checkpoint (`chexbert.pth`).
-- Implement scoring wrapper `src/evaluation/chexbert_scorer.py` that takes candidate report strings and outputs 14-observation binary pathology vectors.
-- Implement clinical F1, precision, recall, and label-based accuracy between ground truth target reports and generated candidate reports.
+### 10.3 Remaining
+1. Push the repository (Kaggle clones it), then run `notebooks/kaggle_s0_s3_generation.ipynb` in FP16: S0 test, S1 + 5 samples on val, S1 + 5 samples on test (≈ 6–10 GPU hours).
+2. Locally: score the outputs with `evaluate_stage.py` (fit the review flag on val, apply it on test), run `eval_localization.py --split test`, then `build_ablation.py` and `bootstrap_ci.py` for the final S0–S3 table.
+3. Write up results, including the limitations above (community checkpoint, 4-bit tuning vs FP16 final runs, chance-level Grad-CAM, RAG copying, no rib masks, 3 Pneumothorax test cases).
 
-### Step 3: Implement Stage S0 (Baseline VLM)
-- Run greedy decoding inference on the held-out `test` split (734 patients).
-- Prompt template: `"Indication: {clean_indication}. Analyze this chest radiograph and provide detailed findings and diagnostic impression."`
-- Compute baseline lexical metrics (BLEU-1 to 4, ROUGE-L) and clinical metrics (CheXbert 14-disease F1, RadGraph F1).
-
-### Step 4: Implement Stage S1 (VLM + RAG)
-- Build vector retrieval knowledge base strictly from the `train` partition reports (2,566 patients) using a dense biomedical embedding model (e.g., `BioLinkBERT` or `MedCPT`) with FAISS or ChromaDB.
-- Retrieve top-$k$ ($k=3$) similar case reports based on indication and visual features.
-- Condition VLM report generation on retrieved context.
-
-### Step 5: Implement Stage S2 (VLM + RAG + Grad-CAM) (DR-016)
-- Freeze the pretrained vision encoder (CLIP ViT-L/14).
-- Train a lightweight linear/MLP classification head on visual tokens using CheXbert labels on the `train` split only.
-- Generate Grad-CAM heatmaps for detected pathologies.
-- Evaluate Pointing Game localization accuracy using `torchxrayvision` PSPNet anatomical compartment masks (Cardiomegaly $\to$ Heart, Effusion $\to$ Costophrenic angle).
-
-### Step 6: Implement Stage S3 (Complete Trustworthy Pipeline + Uncertainty) (DR-015)
-- Extract token-level predictive entropy $H(Y\mid X)$ from greedy generation logits.
-- Generate 5 stochastic sampled completions ($T=0.7, \text{top\_p}=0.9$) per test patient.
-- Score all 5 samples with CheXbert and compute diagnostic consensus agreement.
-- Trigger human review flag when token entropy is high or semantic consensus is low.
-
-### Step 7: Final MTS Metric Synthesis & Dissertation Ablation Table
-- Define normalized composite Medical Trustworthiness Score (MTS) combining diagnostic F1, ECE calibration, hallucination rate, and Pointing Game explainability.
-- Compile comparative ablation table across S0, S1, S2, and S3 for publication and dissertation defense.
+No test-split metric has been computed for any stage yet.

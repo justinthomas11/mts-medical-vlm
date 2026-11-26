@@ -362,3 +362,16 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
   1. Keep DR-021: Rejected; chance-level saliency would raise S2 and S3 MTS without any localization ability.
   2. Per-condition correction weighted by pair counts: Rejected for simplicity; conditions with very few pairs (e.g. 3 Pneumothorax test cases) would carry unstable chance estimates.
 - Justification: A kappa-style correction is a standard way to remove chance agreement, keeps E in [0, 1], and makes the explainability axis measure localization above chance, which is what DR-016 intends to evaluate.
+
+---
+
+## Decision Record 027: Final Scoring Runs on Kaggle Alongside Generation
+- Date: 2026-11-26
+- Status: Accepted (no test-split output exists yet)
+- Context: Windows Smart App Control on the development laptop now blocks PyTorch's DLLs (`torch_python.dll`, Code Integrity event 3077, seen since 2026-11-05). Generation was already planned for Kaggle FP16 (DR-001), but CheXbert scoring, RadGraph and Grad-CAM localization also need torch and can no longer run locally. Turning Smart App Control off is irreversible without a Windows reset and was not done.
+- Decision: `notebooks/kaggle_s0_s3_generation.ipynb` now generates and scores in one Kaggle session: S0/S1 generation (FP16), the four `evaluate_stage.py` runs (review flag fitted on val, applied to test), CLIP feature extraction, test localization, `build_ablation.py` and `bootstrap_ci.py`, packaged as `phase2_results.zip`. RadGraph runs in its own venv (transformers < 5, DR-022). The Grad-CAM head trained locally on the train split is uploaded as an input and never retrained. CLIP features are re-extracted on Kaggle, so val localization is recomputed with them and printed next to the committed val numbers as a consistency check. Scoring dependencies are installed before generation so an install failure surfaces immediately, and the full pytest suite runs on Kaggle (informational).
+- Alternatives Considered:
+  1. 4-bit generation and scoring locally: blocked by Smart App Control.
+  2. WSL2 with CUDA: not installed; needs admin rights, a reboot and an unverified environment.
+- Limitations: Kaggle-extracted CLIP features may differ numerically (GPU, FP16) from the local features used for the head's val selection; the val re-check quantifies this.
+- Justification: Keeps the FP16 final-run plan, leaves the laptop's security settings alone, and produces every metric from one recorded commit.

@@ -79,3 +79,20 @@ def test_split_check_detects_count_change_and_ignores_excluded_rows():
     problems = split_mismatches(_frame(got), _frame(ref))
     assert any("train:" in p for p in problems) and any("missing" in p for p in problems)
     assert not any("unexpected" in p for p in problems)
+
+
+def test_notebook_scores_in_order_without_retraining_the_head():
+    code = _code()
+    pos = lambda s: code.index(s)
+    # Review flag is fitted on val before it is applied to test (DR-020).
+    fit = pos('"results/s1/generations_val.jsonl", "--uncertainty", "--fit-flagger"')
+    apply = pos('"results/s1/generations_test.jsonl", "--uncertainty")')
+    assert pos("run_generation.py") < fit < apply
+    # Localization needs features first; the ablation needs every metric file; CIs come last.
+    loc_test = pos('"src/pipeline/eval_localization.py", "--split", "test"')
+    assert pos("extract_features.py") < loc_test
+    assert max(apply, loc_test) < pos('"src/evaluation/build_ablation.py"') < pos('"src/evaluation/bootstrap_ci.py"')
+    # The Grad-CAM head is uploaded, never retrained on Kaggle (train split only, DR-016).
+    assert "train_xai_head.py" not in code and "HEAD_PATH" in code
+    # Scoring dependencies (incl. the RadGraph venv) are installed before generation starts.
+    assert pos("RADGRAPH_PYTHON") < pos("run_generation.py")

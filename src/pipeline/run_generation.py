@@ -36,6 +36,11 @@ def output_paths(ecfg, stage: str, split: str, tag: str = ""):
     return out_dir, out_dir / f"generations_{suffix}.jsonl", out_dir / f"run_config_{suffix}.json"
 
 
+def past_deadline(deadline) -> bool:
+    import time
+    return deadline is not None and time.time() > deadline
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--stage", choices=["s0", "s1"], required=True)
@@ -46,6 +51,8 @@ def main():
     parser.add_argument("--tag", default="", help="suffix for output files, e.g. smoke20")
     parser.add_argument("--rag-layout", choices=list(RAG_LAYOUTS), default=None,
                         help="override rag.layout from the config (val comparisons only)")
+    parser.add_argument("--deadline", type=float, default=None,
+                        help="unix time after which no new patient is started (Kaggle sessions; resume later)")
     args = parser.parse_args()
 
     dcfg, ecfg = load_configs()
@@ -75,6 +82,9 @@ def main():
             done = {json.loads(line)["uid"] for line in f if line.strip()}
     todo = df[~df["uid"].isin(done)]
     print(f"{args.stage}/{args.split}: {len(df)} patients, {len(done)} already done, {len(todo)} to generate")
+    if todo.empty or past_deadline(args.deadline):
+        print("Nothing to generate now" + (" (deadline reached)" if not todo.empty else "") + ".")
+        return
 
     from src.models.llava_med import LlavaMedGenerator
     import torch
@@ -103,6 +113,9 @@ def main():
 
     with open(gen_path, "a", encoding="utf-8") as out:
         for i, row in enumerate(todo.itertuples(index=False)):
+            if past_deadline(args.deadline):
+                print(f"Deadline reached after {i} new patients; stopping cleanly. Rerun to resume.", flush=True)
+                break
             query = build_query(row.clean_indication, template_id)
             if args.stage == "s1":
                 r = retrieval.loc[row.uid]

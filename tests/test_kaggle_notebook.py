@@ -96,3 +96,20 @@ def test_notebook_scores_in_order_without_retraining_the_head():
     assert "train_xai_head.py" not in code and "HEAD_PATH" in code
     # Scoring dependencies (incl. the RadGraph venv) are installed before generation starts.
     assert pos("RADGRAPH_PYTHON") < pos("run_generation.py")
+
+
+def test_notebook_splits_generation_across_sessions():
+    code = _code()
+    # Generation stops at a deadline so each Kaggle session ends normally and keeps its output.
+    assert '"--deadline", str(DEADLINE)' in code
+    # Scoring is skipped unless all three generation files are complete.
+    assert code.count("if not COMPLETE:") == 3
+    assert code.index("COMPLETE = all(") < code.index('"src/evaluation/evaluate_stage.py"')
+
+
+def test_run_generation_deadline():
+    from src.pipeline.run_generation import past_deadline
+    import time
+    assert not past_deadline(None)
+    assert past_deadline(time.time() - 1)
+    assert not past_deadline(time.time() + 60)

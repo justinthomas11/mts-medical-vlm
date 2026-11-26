@@ -174,11 +174,13 @@ python src/pipeline/eval_localization.py --split val
 python src/pipeline/run_generation.py --stage s1 --split val --limit 20 --samples 5 --tag smoke20
 ```
 
-**Final generation (Kaggle, FP16):** run `notebooks/kaggle_s0_s3_generation.ipynb`. It rebuilds the
-processed data, stops unless the split matches the committed one, and generates S0 (test), S1 + 5 samples
-(val, for the review flag) and S1 + 5 samples (test).
+**Final generation and scoring (Kaggle, FP16, DR-027):** upload `checkpoints/xai_head.pt` as a Kaggle
+dataset, then run `notebooks/kaggle_s0_s3_generation.ipynb`. It rebuilds the processed data, stops unless the
+split matches the committed one, generates S0 (test), S1 + 5 samples (val, for the review flag) and S1 + 5
+samples (test), then scores everything (CheXbert, BLEU/ROUGE-L, RadGraph, review flag, test localization,
+ablation table, bootstrap CIs) and writes `phase2_results.zip`. Unzip it into the repo root and commit.
 
-**Scoring (locally, after downloading the Kaggle outputs):**
+The same scoring can be run anywhere torch works (locally it is blocked by Smart App Control, DR-027):
 ```bash
 python src/evaluation/evaluate_stage.py results/s0/generations_test.jsonl
 python src/evaluation/evaluate_stage.py results/s1/generations_test.jsonl

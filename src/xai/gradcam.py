@@ -15,12 +15,24 @@ import torch.nn.functional as F
 from src.models.vision_encoder import GRID
 
 
-def gradcam(head: torch.nn.Module, tokens: torch.Tensor, class_idx: int) -> np.ndarray:
-    """tokens: (576, D) patch tokens for one image. Returns a (24, 24) CAM scaled to [0, 1]."""
+def gradcam(head: torch.nn.Module, tokens: torch.Tensor, class_idx: int, layer: str = "tokens") -> np.ndarray:
+    """tokens: (576, D) patch tokens for one image. Returns a (24, 24) CAM scaled to [0, 1].
+
+    layer="tokens": target layer is the frozen encoder's patch tokens (DR-016, v1).
+    layer="hidden": target layer is the head's per-token hidden activations (after LayerNorm-Linear-GELU,
+    before mean-pooling). Because pooling is followed by a linear classifier, Grad-CAM there equals
+    the class activation map of Zhou et al. (DR-029)."""
     head.eval()
     device = next(head.parameters()).device
-    a = tokens.detach().to(device, torch.float32).unsqueeze(0).requires_grad_(True)
-    logit = head(a)[0, class_idx]
+    x = tokens.detach().to(device, torch.float32).unsqueeze(0)
+    if layer == "tokens":
+        a = x.requires_grad_(True)
+        logit = head(a)[0, class_idx]
+    elif layer == "hidden":
+        a = head.token_mlp(x).detach().requires_grad_(True)
+        logit = head.classifier(head.dropout(a.mean(dim=1)))[0, class_idx]
+    else:
+        raise ValueError(f"unknown Grad-CAM layer {layer!r}")
     (grad,) = torch.autograd.grad(logit, a)
     weights = grad[0].mean(dim=0)                      # (D,)
     cam = F.relu((a[0] * weights).sum(dim=1)).detach()  # (576,)

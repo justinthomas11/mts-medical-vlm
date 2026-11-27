@@ -40,6 +40,7 @@ xai:                         # DR-016, DR-019
   lr: 0.001
   weight_decay: 0.01
   batch_size: 64
+  cam_layer: "hidden"        # Grad-CAM target layer: head hidden tokens (= CAM), chosen on val (DR-029); v1 used "tokens"
   rim_fraction: 0.06         # pleural-rim width as a fraction of the 512 px segmentation frame
 
 evaluation:

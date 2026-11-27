@@ -74,6 +74,24 @@ def test_gradcam_localises_the_driving_patch():
     assert cam.max() == pytest.approx(1.0)
 
 
+def test_gradcam_hidden_layer_equals_class_activation_map():
+    """At the head's hidden layer (before mean-pool + linear), Grad-CAM is the CAM w_c . h_t (DR-029)."""
+    torch.manual_seed(0)
+    head = PatchTokenHead(in_dim=8, hidden=6, n_classes=3, dropout=0.0).eval()
+    tokens = torch.randn(576, 8)
+    cam = gradcam(head, tokens, class_idx=2, layer="hidden")
+    with torch.no_grad():
+        ref = torch.relu(head.token_mlp(tokens) @ head.classifier.weight[2]).reshape(24, 24).numpy()
+    ref = ref / ref.max()
+    assert np.allclose(cam, ref, atol=1e-5)
+
+
+def test_gradcam_rejects_unknown_layer():
+    head = PatchTokenHead(in_dim=4, hidden=4, n_classes=1)
+    with pytest.raises(ValueError):
+        gradcam(head, torch.zeros(576, 4), 0, layer="nope")
+
+
 def test_upsample_shape():
     assert upsample(np.random.rand(24, 24), 512).shape == (512, 512)
 

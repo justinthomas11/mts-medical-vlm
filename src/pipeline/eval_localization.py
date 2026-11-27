@@ -37,10 +37,13 @@ def main():
     parser.add_argument("--split", choices=["val", "test"], required=True)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--tag", default="")
+    parser.add_argument("--cam-layer", choices=["tokens", "hidden"], default=None,
+                        help="override xai.cam_layer (val comparisons, DR-029)")
     args = parser.parse_args()
 
     dcfg, ecfg = load_configs()
     set_seed(dcfg["project"]["seed"])
+    cam_layer = args.cam_layer or ecfg["xai"].get("cam_layer", "tokens")
     feat_dir = path(ecfg["paths"]["features_dir"])
     index = pd.read_csv(feat_dir / "feature_index.csv")
     tokens = np.load(feat_dir / "clip_patch_tokens.f16.npy", mmap_mode="r")
@@ -71,7 +74,7 @@ def main():
         targets = derive_targets(segmenter.segment(load_image(dcfg, files[uid])), ecfg["xai"]["rim_fraction"])
         for cond in positives:
             c = CHEXBERT_LABELS.index(cond)
-            heat = upsample(gradcam(head, a, c), SEG_SIZE)
+            heat = upsample(gradcam(head, a, c, layer=cam_layer), SEG_SIZE)
             mask = targets[CONDITION_TARGETS[cond]]
             records.append({
                 "uid": uid, "condition": cond, "target": CONDITION_TARGETS[cond],
@@ -88,7 +91,9 @@ def main():
     pd.DataFrame(records).to_csv(out_dir / f"localization_{suffix}.csv", index=False)
     summary = {"split": args.split, "n_patients_scanned": int(len(rows)),
                "target_definitions": CONDITION_TARGETS, "rim_fraction": ecfg["xai"]["rim_fraction"],
-               "gradcam_layer": "vision_tower layer -2 patch tokens (24x24)",
+               "gradcam_layer": {"tokens": "vision_tower layer -2 patch tokens (24x24)",
+                                 "hidden": "head per-token hidden activations (24x24), = CAM"}[cam_layer],
+               "cam_layer": cam_layer,
                "all_positive_pairs": summarize(records),
                "head_predicted_positive_pairs": summarize([r for r in records if r["head_predicted_positive"]])}
     with open(out_dir / f"localization_{suffix}_summary.json", "w") as f:

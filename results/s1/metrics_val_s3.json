@@ -1,0 +1,164 @@
+{
+  "generations": "results/s1/generations_val.jsonl",
+  "split": "val",
+  "n_reports": 366,
+  "empty_report_rate": 0.0,
+  "clinical": {
+    "n_reports": 366,
+    "micro_14": {
+      "precision": 0.34375,
+      "recall": 0.28672985781990523,
+      "f1": 0.31266149870801035
+    },
+    "macro_14": {
+      "precision": 0.1793138116201994,
+      "recall": 0.12179875534730063,
+      "f1": 0.12626792198742587
+    },
+    "micro_5": {
+      "precision": 0.17647058823529413,
+      "recall": 0.07258064516129033,
+      "f1": 0.10285714285714286
+    },
+    "macro_5": {
+      "precision": 0.2039498432601881,
+      "recall": 0.09559808612440192,
+      "f1": 0.11396094669751959
+    },
+    "example_f1_14": 0.32923930956717845,
+    "exact_match_14": 0.30601092896174864,
+    "per_label": {
+      "Enlarged Cardiomediastinum": {
+        "precision": 0.13636363636363635,
+        "recall": 0.10714285714285714,
+        "f1": 0.12,
+        "support": 28,
+        "predicted_positive": 22
+      },
+      "Cardiomegaly": {
+        "precision": 0.13793103448275862,
+        "recall": 0.07272727272727272,
+        "f1": 0.09523809523809523,
+        "support": 55,
+        "predicted_positive": 29
+      },
+      "Lung Opacity": {
+        "precision": 0.2777777777777778,
+        "recall": 0.08771929824561403,
+        "f1": 0.13333333333333333,
+        "support": 57,
+        "predicted_positive": 18
+      },
+      "Lung Lesion": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 16,
+        "predicted_positive": 3
+      },
+      "Edema": {
+        "precision": 0.2,
+        "recall": 0.25,
+        "f1": 0.2222222222222222,
+        "support": 4,
+        "predicted_positive": 5
+      },
+      "Consolidation": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 6,
+        "predicted_positive": 2
+      },
+      "Pneumonia": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 15,
+        "predicted_positive": 3
+      },
+      "Atelectasis": {
+        "precision": 0.18181818181818182,
+        "recall": 0.05,
+        "f1": 0.0784313725490196,
+        "support": 40,
+        "predicted_positive": 11
+      },
+      "Pneumothorax": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 2,
+        "predicted_positive": 1
+      },
+      "Pleural Effusion": {
+        "precision": 0.5,
+        "recall": 0.10526315789473684,
+        "f1": 0.17391304347826086,
+        "support": 19,
+        "predicted_positive": 4
+      },
+      "Pleural Other": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 9,
+        "predicted_positive": 2
+      },
+      "Fracture": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 20,
+        "predicted_positive": 2
+      },
+      "Support Devices": {
+        "precision": 0.6666666666666666,
+        "recall": 0.3076923076923077,
+        "f1": 0.42105263157894735,
+        "support": 13,
+        "predicted_positive": 6
+      },
+      "No Finding": {
+        "precision": 0.4098360655737705,
+        "recall": 0.7246376811594203,
+        "f1": 0.5235602094240838,
+        "support": 138,
+        "predicted_positive": 244
+      }
+    }
+  },
+  "hallucination_rate": 0.8055555555555556,
+  "ece": 0.06967213114754099,
+  "confidence_source": "CheXbert agreement of 5 samples with the greedy report",
+  "lexical": {
+    "bleu_1": 0.36928016096226207,
+    "bleu_2": 0.2228325318668872,
+    "bleu_3": 0.1484092892389466,
+    "bleu_4": 0.10487707918806878,
+    "rouge_l": 0.2983372654591395
+  },
+  "latency_s_mean": 6.5846912568306015,
+  "copy_overlap": {
+    "mean_4gram": 0.5609529190447454,
+    "share_over_half_copied": 0.5355191256830601
+  },
+  "uncertainty_summary": {
+    "mean_token_entropy": 0.3933736303505676,
+    "mean_consensus": 0.9611631537861047,
+    "n_samples": 5
+  },
+  "review_flag": {
+    "flag_rate": 0.1994535519125683,
+    "threshold": 0.7144808743169399,
+    "example_f1_unflagged": 0.3431063437889377,
+    "example_f1_flagged": 0.27358121330724067,
+    "micro_f1_unflagged": 0.33610648918469216,
+    "aurc": 0.6648386476773284,
+    "full_coverage_risk": 0.6707606904328216
+  },
+  "radgraph": {
+    "radgraph_f1": 0.2843706169688888,
+    "reward_level": "partial"
+  }
+}

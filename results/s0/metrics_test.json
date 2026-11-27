@@ -1,0 +1,146 @@
+{
+  "generations": "results/s0/generations_test.jsonl",
+  "split": "test",
+  "n_reports": 734,
+  "empty_report_rate": 0.010899182561307902,
+  "clinical": {
+    "n_reports": 734,
+    "micro_14": {
+      "precision": 0.12228654124457308,
+      "recall": 0.20812807881773399,
+      "f1": 0.15405651777575205
+    },
+    "macro_14": {
+      "precision": 0.1257485056911535,
+      "recall": 0.1930112446209981,
+      "f1": 0.11506043401141788
+    },
+    "micro_5": {
+      "precision": 0.07126436781609195,
+      "recall": 0.13191489361702127,
+      "f1": 0.09253731343283582
+    },
+    "macro_5": {
+      "precision": 0.07677940199984376,
+      "recall": 0.15013935340022297,
+      "f1": 0.08196150862880865
+    },
+    "example_f1_14": 0.16005687470265123,
+    "exact_match_14": 0.09809264305177112,
+    "per_label": {
+      "Enlarged Cardiomediastinum": {
+        "precision": 0.08620689655172414,
+        "recall": 0.18867924528301888,
+        "f1": 0.11834319526627218,
+        "support": 53,
+        "predicted_positive": 116
+      },
+      "Cardiomegaly": {
+        "precision": 0.109375,
+        "recall": 0.0673076923076923,
+        "f1": 0.08333333333333333,
+        "support": 104,
+        "predicted_positive": 64
+      },
+      "Lung Opacity": {
+        "precision": 0.23770491803278687,
+        "recall": 0.28431372549019607,
+        "f1": 0.25892857142857145,
+        "support": 102,
+        "predicted_positive": 122
+      },
+      "Lung Lesion": {
+        "precision": 0.0648854961832061,
+        "recall": 0.425,
+        "f1": 0.11258278145695365,
+        "support": 40,
+        "predicted_positive": 262
+      },
+      "Edema": {
+        "precision": 0.0784313725490196,
+        "recall": 0.15384615384615385,
+        "f1": 0.1038961038961039,
+        "support": 26,
+        "predicted_positive": 51
+      },
+      "Consolidation": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 10,
+        "predicted_positive": 5
+      },
+      "Pneumonia": {
+        "precision": 0.07423580786026202,
+        "recall": 0.6071428571428571,
+        "f1": 0.13229571984435798,
+        "support": 28,
+        "predicted_positive": 229
+      },
+      "Atelectasis": {
+        "precision": 0.15625,
+        "recall": 0.14492753623188406,
+        "f1": 0.15037593984962405,
+        "support": 69,
+        "predicted_positive": 64
+      },
+      "Pneumothorax": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 3,
+        "predicted_positive": 56
+      },
+      "Pleural Effusion": {
+        "precision": 0.0398406374501992,
+        "recall": 0.38461538461538464,
+        "f1": 0.07220216606498195,
+        "support": 26,
+        "predicted_positive": 251
+      },
+      "Pleural Other": {
+        "precision": 0.18181818181818182,
+        "recall": 0.15384615384615385,
+        "f1": 0.16666666666666666,
+        "support": 13,
+        "predicted_positive": 11
+      },
+      "Fracture": {
+        "precision": 0.2,
+        "recall": 0.047619047619047616,
+        "f1": 0.07692307692307693,
+        "support": 21,
+        "predicted_positive": 5
+      },
+      "Support Devices": {
+        "precision": 0.0625,
+        "recall": 0.027777777777777776,
+        "f1": 0.038461538461538464,
+        "support": 36,
+        "predicted_positive": 16
+      },
+      "No Finding": {
+        "precision": 0.46923076923076923,
+        "recall": 0.21708185053380782,
+        "f1": 0.29683698296836986,
+        "support": 281,
+        "predicted_positive": 130
+      }
+    }
+  },
+  "hallucination_rate": 0.9137380191693291,
+  "ece": 0.18061502530167384,
+  "confidence_source": "none (confidence = 1.0)",
+  "lexical": {
+    "bleu_1": 0.16436721081270556,
+    "bleu_2": 0.06396823965234454,
+    "bleu_3": 0.025502339906712992,
+    "bleu_4": 0.009508511340915335,
+    "rouge_l": 0.1505532488436298
+  },
+  "latency_s_mean": 7.8591621253406,
+  "radgraph": {
+    "radgraph_f1": 0.07430643109577424,
+    "reward_level": "partial"
+  }
+}

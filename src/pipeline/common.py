@@ -28,6 +28,10 @@ def load_configs(data_config: str = "configs/data_config.yaml",
         dcfg = yaml.safe_load(f)
     with open(PROJECT_ROOT / exp_config) as f:
         ecfg = yaml.safe_load(f)
+    # Phase III (DR-030): MTS_RESULTS_DIR redirects all stage outputs (e.g. results_v2) so v1 stays intact.
+    import os
+    if os.environ.get("MTS_RESULTS_DIR"):
+        ecfg["paths"]["results_dir"] = os.environ["MTS_RESULTS_DIR"]
     return dcfg, ecfg
 
 

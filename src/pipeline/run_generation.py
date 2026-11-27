@@ -51,6 +51,7 @@ def main():
     parser.add_argument("--tag", default="", help="suffix for output files, e.g. smoke20")
     parser.add_argument("--rag-layout", choices=list(RAG_LAYOUTS), default=None,
                         help="override rag.layout from the config (val comparisons only)")
+    parser.add_argument("--adapter", default=None, help="LoRA adapter directory (Phase III, DR-030)")
     parser.add_argument("--deadline", type=float, default=None,
                         help="unix time after which no new patient is started (Kaggle sessions; resume later)")
     args = parser.parse_args()
@@ -94,10 +95,10 @@ def main():
     template_id = ecfg["vlm"]["prompt_template_id"]
     layout = args.rag_layout or ecfg["rag"]["layout"]
     gen = LlavaMedGenerator(ecfg["vlm"]["model_id"], quantization=args.quant,
-                            max_new_tokens=ecfg["vlm"]["max_new_tokens"])
+                            max_new_tokens=ecfg["vlm"]["max_new_tokens"], adapter_path=args.adapter)
     run_config = {
         "stage": args.stage, "split": args.split, "n_patients": int(len(df)), "limit": args.limit,
-        "model_id": ecfg["vlm"]["model_id"], "quantization": args.quant,
+        "model_id": ecfg["vlm"]["model_id"], "quantization": args.quant, "adapter": args.adapter,
         "decoding_greedy": {"do_sample": False, "num_beams": 1, "max_new_tokens": ecfg["vlm"]["max_new_tokens"]},
         "decoding_samples": ({"n": args.samples, "temperature": unc["temperature"], "top_p": unc["top_p"],
                               "top_k": 0, "seed": f"{seed} + uid"} if args.samples else None),

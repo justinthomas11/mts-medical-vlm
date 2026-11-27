@@ -59,3 +59,15 @@ mts:                         # DR-021 (explainability chance-corrected, DR-026) 
   sensitivity_weights:       # reported alongside, to show conclusions are not weight-driven
     equal: {diagnostic: 0.3333333333, reliability: 0.3333333333, explainability: 0.3333333334}
     diagnostic_heavy: {diagnostic: 0.6, reliability: 0.2, explainability: 0.2}
+
+finetune:                    # Phase III, DR-030: LoRA on TRAIN reports; selection by val loss
+  rag_fraction: 0.5          # share of train examples shown with 3 retrieved train reports (self excluded)
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  lr: 0.0002
+  grad_accum: 8
+  epochs: 1
+  eval_every: 80               # optimizer steps
+  val_loss_patients: 60
+  adapter_dir: "llava_med_lora"

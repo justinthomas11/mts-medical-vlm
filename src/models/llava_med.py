@@ -56,7 +56,7 @@ class GenerationResult:
 
 class LlavaMedGenerator:
     def __init__(self, model_id: str, quantization: str = "4bit", max_new_tokens: int = 256,
-                 device_map: str = "auto"):
+                 device_map: str = "auto", adapter_path: Optional[str] = None):
         from transformers import AutoProcessor, BitsAndBytesConfig, LlavaForConditionalGeneration
 
         self.model_id = model_id
@@ -83,6 +83,13 @@ class LlavaMedGenerator:
 
         self.processor = AutoProcessor.from_pretrained(model_id)
         self.model = LlavaForConditionalGeneration.from_pretrained(model_id, **kwargs).eval()
+        self.adapter_path = adapter_path
+        if adapter_path:
+            # Phase III LoRA adapter trained on train-split reports (DR-030); merged for FP16 speed.
+            from peft import PeftModel
+            self.model = PeftModel.from_pretrained(self.model, adapter_path).eval()
+            if quantization == "fp16":
+                self.model = self.model.merge_and_unload().eval()
         self.eos_token_id = self.processor.tokenizer.eos_token_id
         self.pad_token_id = self.processor.tokenizer.pad_token_id or self.eos_token_id
 

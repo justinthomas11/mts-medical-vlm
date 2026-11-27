@@ -398,3 +398,15 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
 - Val evidence (366 patients, 124 pairs; Pointing Game [Wilson 95% CI] / chance): tokens 0.153 [0.10, 0.23] / 0.109; hidden 0.250 [0.18, 0.33] / 0.109. Per condition, hidden: Cardiomegaly 0.182 (chance 0.078), Pleural Effusion 0.895 (0.197), Enlarged Cardiomediastinum 0.036 (0.043), Fracture 0.150 (0.196), Pneumothorax 0/2.
 - Test (applied once, 207 pairs): Pointing Game 0.203 [0.15, 0.26] vs chance 0.099 (v1: 0.155); SMR 0.104 (chance 0.099); Cardiomegaly 0.115 (v1 0.038, chance 0.076); Pleural Effusion 0.846 (v1 0.731); Enlarged Cardiomediastinum 0.000; Fracture 0.381; Pneumothorax 0/3.
 - Outputs: `results/s2/localization_{val,test}_camhidden{.csv,_summary.json}`.
+
+---
+
+## Decision Record 030: LoRA Fine-Tuning of LLaVA-Med on Train Reports (Phase III, v2)
+- Date: 2026-11-28
+- Status: Accepted (design fixed before any v2 output exists; v1 results in `results/` stay unchanged)
+- Context: The v1 test run (zero-shot LLaVA-Med) reached CheXbert micro-F1 0.154 (S0) and 0.309 (S1), macro-F1 0.115/0.089, with S1 copying on average 56% of its 4-grams from retrieved reports and calling 490 of 734 test studies normal (281 in the references). LLaVA-Med was never trained to write IU X-Ray reports.
+- Decision: Train one LoRA adapter (r 16, alpha 32, dropout 0.05; q/k/v/o/gate/up/down of the language model; vision tower and projector frozen) on the 2,566 TRAIN patients for one epoch (lr 2e-4, cosine, 3% warm-up, gradient accumulation 8, FP16 on Kaggle). Each patient is one example: with probability 0.5 the S1 prompt with its top-3 retrieved TRAIN reports of OTHER patients (same hybrid index and alpha as S1, self excluded; `results/finetune/retrieval_train.csv`), otherwise the S0 prompt. Target = the patient's own reference report (truncated at 200 tokens); loss on report tokens only. The adapter with the lowest loss on the first 60 val patients (checked every 80 optimizer steps) is kept. The same adapter serves S0 and S1; decoding, prompts, sampling, scoring, review budget and MTS weights are unchanged.
+- Why mix S0 and S1 prompts: one adapter covers both stages, and since the target never equals a retrieved report, the model is trained to use retrieved reports as evidence rather than to transcribe them.
+- Selection rule: val loss only; no generation-based tuning on val and nothing on test. Phase III test results are reported as v2 next to v1 in `results_v2/` (via `MTS_RESULTS_DIR`), with S2 using the DR-029 localization and the S3 review flag re-selected on v2 val outputs by DR-028's procedure.
+- Alternatives Considered: (1) QLoRA locally: the 6 GB GPU and a 5 GB Windows page file cannot load the 7B model for training. (2) A CXR-specific base model (CheXagent, LLaVA-Rad): rejected, it would replace the DR-016 encoder link and the dissertation's base model. (3) Training S0-only prompts: rejected, S1 prompts would be out of distribution for the adapter.
+- Run: `notebooks/kaggle_v2_finetune.ipynb` (fine-tune, generate with `--adapter`, score; resumable across sessions); output `phase3_results.zip`.

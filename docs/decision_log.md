@@ -375,3 +375,15 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
   2. WSL2 with CUDA: not installed; needs admin rights, a reboot and an unverified environment.
 - Limitations: Kaggle-extracted CLIP features may differ numerically (GPU, FP16) from the local features used for the head's val selection; the val re-check quantifies this.
 - Justification: Keeps the FP16 final-run plan, leaves the laptop's security settings alone, and produces every metric from one recorded commit.
+
+---
+
+## Decision Record 028: Phase III Improvements After the v1 Test Run; Review Flag v2
+- Date: 2026-11-27
+- Status: Accepted. The v1 S0–S3 test results (commit 0e09b75) are kept unchanged as the pre-registered result; everything below is a disclosed post-hoc improvement, selected on val only and reported separately as v2.
+- Context: The v1 test run showed that the DR-020 review flag does not rank errors: test AURC 0.673 against a full-coverage risk of 0.662 (risk = 1 - example F1). On val its 5-fold CV AURC is 0.665 against 0.671; mean greedy token entropy alone is close to uninformative (0.647).
+- Decision (review flag v2): `src/pipeline/tune_review_flag.py` compares reference-free per-report risk scorers on val by 5-fold cross-validated AURC (seed 42): the DR-020 percentile combination, each of nine single features (sign chosen on the training fold), and ridge regression on all nine (`src/uncertainty/review_features.py`). Lowest CV AURC is selected, refit on all val, and the threshold set at the val 80th percentile (20% budget). It is applied to test once.
+- Val evidence (CV AURC): retrieved-report label disagreement 0.557 (selected), retrieved-majority mismatch 0.571, ridge (l2=100) 0.572, sample disagreement 0.573, DR-020 combination 0.665, token entropy 0.647.
+- Test (applied once, S1 v1 generations): AURC 0.629 vs full-coverage risk 0.662 (DR-020 flag: 0.673); flag rate 14.9% (the feature is discrete, so ties put fewer reports above the val threshold); example F1 0.248 flagged vs 0.353 unflagged (DR-020: 0.313 vs 0.346).
+- Note: the selected signal measures disagreement among the retrieved train reports, i.e. retrieval uncertainty rather than the generator's own. S3's calibrated confidences (label agreement, DR-015) are unchanged; only the review flag is replaced.
+- Outputs: `results/s3/review_flag_v2_selection.json`, `review_flagger_v2.json`, `review_flag_v2_{val,test}.json`.

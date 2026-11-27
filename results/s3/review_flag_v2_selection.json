@@ -1,0 +1,21 @@
+{
+  "cv_aurc_val": {
+    "v1_entropy+disagreement_percentiles": 0.6648854669740836,
+    "single:entropy": 0.6465925637029335,
+    "single:disagreement": 0.5724922627983533,
+    "single:copy": 0.6546598840742053,
+    "single:n_tokens": 0.6915255433843809,
+    "single:n_positive": 0.5968669766532605,
+    "single:pred_normal": 0.5879951367735778,
+    "single:retr_score": 0.6293879064587922,
+    "single:retr_disagree": 0.557152942118903,
+    "single:retr_mismatch": 0.5710674733347243,
+    "ridge_all_l2=1": 0.5782163026198338,
+    "ridge_all_l2=10": 0.5761247897126831,
+    "ridge_all_l2=100": 0.5719301505299714
+  },
+  "selected": "single:retr_disagree",
+  "val_full_coverage_risk": 0.6707606904328216,
+  "folds": 5,
+  "seed": 42
+}

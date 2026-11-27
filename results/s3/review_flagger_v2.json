@@ -1,0 +1,7 @@
+{
+  "type": "single:retr_disagree",
+  "sign": 1.0,
+  "budget": 0.2,
+  "threshold": 0.04761904761904762,
+  "fitted_on": "results/s1/*_val_s3 (366 val patients)"
+}

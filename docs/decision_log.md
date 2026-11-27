@@ -387,3 +387,14 @@ Institution: Christ University, Bangalore (M.Tech Data Science Dissertation)
 - Test (applied once, S1 v1 generations): AURC 0.629 vs full-coverage risk 0.662 (DR-020 flag: 0.673); flag rate 14.9% (the feature is discrete, so ties put fewer reports above the val threshold); example F1 0.248 flagged vs 0.353 unflagged (DR-020: 0.313 vs 0.346).
 - Note: the selected signal measures disagreement among the retrieved train reports, i.e. retrieval uncertainty rather than the generator's own. S3's calibrated confidences (label agreement, DR-015) are unchanged; only the review flag is replaced.
 - Outputs: `results/s3/review_flag_v2_selection.json`, `review_flagger_v2.json`, `review_flag_v2_{val,test}.json`.
+
+---
+
+## Decision Record 029: Grad-CAM Target Layer = Head Hidden Tokens (Phase III, val-selected)
+- Date: 2026-11-27
+- Status: Accepted (selected on val; applied to test once; v1 test localization in `results/s2/localization_test*` is kept)
+- Context: v1 Grad-CAM (DR-016) targets the frozen encoder's layer -2 patch tokens. Its val Pointing Game (0.153, 124 pairs) did not exceed chance (0.109). Raw CLIP ViT tokens contain a few very large outlier channels, which can dominate the gradient-weighted channel sum regardless of the class.
+- Decision: Target the head's per-token hidden activations (after LayerNorm-Linear-GELU, before mean-pooling) — `xai.cam_layer: "hidden"`, `src/xai/gradcam.py`. Because mean-pooling is followed by a linear classifier, Grad-CAM at this layer equals the class activation map (CAM) of Zhou et al.; it is still a gradient-based explanation of the same frozen-encoder head, with no retraining.
+- Val evidence (366 patients, 124 pairs; Pointing Game [Wilson 95% CI] / chance): tokens 0.153 [0.10, 0.23] / 0.109; hidden 0.250 [0.18, 0.33] / 0.109. Per condition, hidden: Cardiomegaly 0.182 (chance 0.078), Pleural Effusion 0.895 (0.197), Enlarged Cardiomediastinum 0.036 (0.043), Fracture 0.150 (0.196), Pneumothorax 0/2.
+- Test (applied once, 207 pairs): Pointing Game 0.203 [0.15, 0.26] vs chance 0.099 (v1: 0.155); SMR 0.104 (chance 0.099); Cardiomegaly 0.115 (v1 0.038, chance 0.076); Pleural Effusion 0.846 (v1 0.731); Enlarged Cardiomediastinum 0.000; Fracture 0.381; Pneumothorax 0/3.
+- Outputs: `results/s2/localization_{val,test}_camhidden{.csv,_summary.json}`.

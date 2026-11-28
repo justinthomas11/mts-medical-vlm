@@ -71,3 +71,21 @@ finetune:                    # Phase III, DR-030: LoRA on TRAIN reports; selecti
   eval_every: 80               # optimizer steps
   val_loss_patients: 60
   adapter_dir: "llava_med_lora"
+
+finetune_v3:                 # DR-032: v2 collapsed to a normal template (DR-031); fixed before any v3 output
+  rag_fraction: 0.5
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  lr: 0.0001
+  grad_accum: 8
+  epochs: 2
+  eval_every: 107            # 6 checkpoints over 642 steps, each scored on val generations
+  val_loss_patients: 60
+  train_projector: true        # multi_modal_projector trained in full (peft modules_to_save)
+  sampling: "rare_finding"     # sqrt inverse-frequency of the rarest positive TRAIN CheXbert label, cap 5
+  sampling_cap: 5.0
+  select: "generation"         # greedy S1 reports on val subset, CheXbert findings micro-F1; zero-shot competes
+  select_patients: 100
+  select_min_distinct: 0.5
+  adapter_dir: "llava_med_lora_v3"

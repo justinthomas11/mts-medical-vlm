@@ -7,6 +7,9 @@ The target is the patient's own reference report. Mixing both formats lets one a
 and teaches the model that retrieved reports are evidence, not the answer: the target never equals them.
 
 Loss is computed on the target tokens only (prompt and image tokens are masked with -100).
+
+v3 recipe (DR-032): rare-finding oversampling (`sampling_weights`) and checkpoint selection on greedy
+val generations scored by CheXbert (`selection_score`), with the zero-shot model as a candidate.
 """
 
 from dataclasses import dataclass
@@ -17,6 +20,7 @@ import numpy as np
 from src.models.prompts import build_query, rag_prompt, s0_prompt
 
 IGNORE_INDEX = -100
+NO_FINDING = "No Finding"
 LORA_TARGETS = r".*language_model.*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)"
 
 
@@ -66,3 +70,40 @@ def encode(processor, image, prompt: str, target: str):
     full = processor(images=image, text=prompt_text + " " + target + eos, return_tensors="pt")
     full["labels"] = mask_prompt(full["input_ids"], prompt_ids.shape[1])
     return full
+
+
+def sampling_weights(labels: np.ndarray, label_names: Sequence[str], cap: float = 5.0) -> np.ndarray:
+    """Per-example sampling weight from TRAIN reference labels (N, L) binary.
+
+    w_i = sqrt(n_max / n_rarest positive label of i), clipped to [1, cap]; reports with no positive label
+    (or only 'No Finding') get 1. Rare findings are shown more often without dropping normal reports.
+    """
+    labels = np.asarray(labels).astype(bool)
+    counts = labels.sum(axis=0).astype(float)
+    n_max = counts.max()
+    w = np.ones(len(labels))
+    for i, row in enumerate(labels):
+        pos = [j for j in np.flatnonzero(row) if label_names[j] != NO_FINDING and counts[j] > 0]
+        if pos:
+            w[i] = np.sqrt(n_max / min(counts[j] for j in pos))
+    return np.clip(w, 1.0, cap)
+
+
+def selection_score(y_true: np.ndarray, y_pred: np.ndarray, reports: Sequence[str], label_names: Sequence[str],
+                    min_distinct: float = 0.5) -> Dict:
+    """Checkpoint selection on val generations (DR-032).
+
+    score = CheXbert micro-F1 over the findings (all labels except 'No Finding'), the part a template
+    collapse destroys. A candidate whose share of distinct reports is below `min_distinct` is ineligible.
+    """
+    from src.evaluation.clinical_metrics import _prf
+
+    keep = [j for j, n in enumerate(label_names) if n != NO_FINDING]
+    t, p = np.asarray(y_true)[:, keep].astype(np.int8), np.asarray(y_pred)[:, keep].astype(np.int8)
+    f1 = _prf(t, p, "micro")["f1"]
+    macro = _prf(np.asarray(y_true).astype(np.int8), np.asarray(y_pred).astype(np.int8), "macro")["f1"]
+    distinct = len(set(r.strip() for r in reports)) / max(1, len(reports))
+    eligible = distinct >= min_distinct
+    return {"findings_micro_f1": float(f1), "macro_f1_14": float(macro), "distinct_ratio": float(distinct),
+            "n_predicted_findings": int(p.sum()), "eligible": bool(eligible),
+            "score": float(f1) if eligible else float("-inf")}

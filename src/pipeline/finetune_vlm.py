@@ -9,9 +9,15 @@ Steps:
      Val loss on a fixed val subset after every `eval_every` optimizer steps; best adapter kept.
 Outputs: checkpoints/<adapter_dir>/ (git-ignored), results/finetune/train_log_<tag>.json
 
+Recipe v3 (DR-032, `--recipe v3`, config block finetune_v3): rare-finding oversampling, the projector trained
+too, and checkpoint selection on greedy val generations scored by CheXbert with the zero-shot model as a
+candidate. train_log.json["selected"] is "zero_shot" or the chosen step; the adapter is saved only if a
+checkpoint beats zero-shot.
+
 Usage:
   python src/pipeline/finetune_vlm.py --quant 4bit --max-steps 4 --tag smoke      # memory check
   python src/pipeline/finetune_vlm.py --quant 4bit --epochs 1
+  python src/pipeline/finetune_vlm.py --quant fp16 --recipe v3
 """
 
 import sys
@@ -64,18 +70,28 @@ def main():
     ap.add_argument("--tag", default="")
     ap.add_argument("--max-target-tokens", type=int, default=200)
     ap.add_argument("--model-id", default=None, help="override vlm.model_id (tiny model for code smoke tests)")
+    ap.add_argument("--recipe", choices=["v2", "v3"], default="v2", help="config block finetune / finetune_v3")
+    ap.add_argument("--select-patients", type=int, default=None, help="override select_patients (smoke tests)")
+    ap.add_argument("--eval-every", type=int, default=None, help="override eval_every (smoke tests)")
     args = ap.parse_args()
 
     import torch
     from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
     from transformers import AutoProcessor, BitsAndBytesConfig, LlavaForConditionalGeneration
 
-    from src.models.finetune import LORA_TARGETS, build_examples, encode
+    from src.evaluation.chexbert_scorer import CHEXBERT_LABELS
+    from src.models.finetune import LORA_TARGETS, build_examples, encode, sampling_weights, selection_score
     from src.models.llava_med import pad_to_square
-    from src.pipeline.common import load_benchmark, load_configs, load_image, path, set_seed
+    from src.pipeline.common import (labels_for, load_benchmark, load_configs, load_image, load_reference_labels,
+                                     path, set_seed)
 
     dcfg, ecfg = load_configs()
-    ft = ecfg["finetune"]
+    ft = dict(ecfg["finetune"] if args.recipe == "v2" else ecfg["finetune_v3"])
+    if args.select_patients:
+        ft["select_patients"] = args.select_patients
+    if args.eval_every:
+        ft["eval_every"] = args.eval_every
+    select_by_generation = ft.get("select") == "generation"
     seed = dcfg["project"]["seed"]
     set_seed(seed)
     k = ecfg["rag"]["k"]
@@ -101,6 +117,20 @@ def main():
     val_rows = df[df["split"] == "val"].sort_values("uid").head(ft["val_loss_patients"])[cols].to_dict("records")
     val_ex = build_examples(val_rows, reports, retrieved_val, template_id, layout, ft["rag_fraction"], seed + 1)
 
+    ref = load_reference_labels(ecfg)
+    weights = None
+    if ft.get("sampling") == "rare_finding":
+        w = sampling_weights(labels_for(ref, [e.uid for e in train_ex]), CHEXBERT_LABELS, ft["sampling_cap"])
+        weights = w / w.sum()
+    sel_ex, sel_true = [], None
+    if select_by_generation:
+        # Fixed random val subset, S1 prompts (the reported stage), retrieval from the train-only index.
+        val_all = df[df["split"] == "val"].sort_values("uid")
+        pick = np.sort(np.random.default_rng(seed).choice(len(val_all), ft["select_patients"], replace=False))
+        sel_rows = val_all.iloc[pick][cols].to_dict("records")
+        sel_ex = build_examples(sel_rows, reports, retrieved_val, template_id, layout, 1.0, seed + 2)
+        sel_true = labels_for(ref, [e.uid for e in sel_ex])
+
     model_id = args.model_id or ecfg["vlm"]["model_id"]
     processor = AutoProcessor.from_pretrained(model_id)
     kwargs = {"device_map": "auto", "low_cpu_mem_usage": True, "dtype": torch.float16}
@@ -119,7 +149,8 @@ def main():
         model.enable_input_require_grads()
     model.config.use_cache = False
     lora = LoraConfig(r=ft["lora_r"], lora_alpha=ft["lora_alpha"], lora_dropout=ft["lora_dropout"],
-                      target_modules=LORA_TARGETS, bias="none", task_type="CAUSAL_LM")
+                      target_modules=LORA_TARGETS, bias="none", task_type="CAUSAL_LM",
+                      modules_to_save=["multi_modal_projector"] if ft.get("train_projector") else None)
     model = get_peft_model(model, lora)
     n_train = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"trainable LoRA parameters: {n_train:,}")
@@ -151,6 +182,32 @@ def main():
         model.train()
         return tot / n
 
+    labeler = None
+
+    def generate_selection():
+        """Greedy S1 reports for the selection subset (same decoding as run_generation), CheXbert-scored."""
+        nonlocal labeler
+        model.eval()
+        texts = []
+        with torch.no_grad(), torch.autocast("cuda", dtype=torch.float16):
+            for ex in sel_ex:
+                messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": ex.prompt}]}]
+                text = processor.apply_chat_template(messages, add_generation_prompt=True)
+                inp = processor(images=pad_to_square(load_image(dcfg, ex.image_file)), text=text, return_tensors="pt")
+                inp = {k_: (v.to(device, torch.float16) if v.dtype.is_floating_point else v.to(device))
+                       for k_, v in inp.items()}
+                out = model.generate(**inp, do_sample=False, num_beams=1, use_cache=True,
+                                     max_new_tokens=ecfg["vlm"]["max_new_tokens"],
+                                     pad_token_id=tok.pad_token_id or tok.eos_token_id, eos_token_id=tok.eos_token_id)
+                texts.append(tok.decode(out[0, inp["input_ids"].shape[1]:], skip_special_tokens=True).strip())
+        model.train()
+        if labeler is None:
+            from src.evaluation.chexbert_scorer import CheXbertLabeler
+            labeler = CheXbertLabeler()
+        res = selection_score(sel_true, labeler.label(texts), texts, CHEXBERT_LABELS, ft["select_min_distinct"])
+        res["examples"] = [{"uid": e.uid, "report": t} for e, t in list(zip(sel_ex, texts))[:5]]
+        return res
+
     accum = ft["grad_accum"]
     steps_per_epoch = math.ceil(len(train_ex) / accum)
     total_steps = args.max_steps or int(math.ceil((args.epochs or ft["epochs"]) * steps_per_epoch))
@@ -161,26 +218,38 @@ def main():
     scaler = torch.amp.GradScaler("cuda")
 
     adapter_dir = path(ecfg["paths"]["checkpoints_dir"]) / (ft["adapter_dir"] + (f"_{args.tag}" if args.tag else ""))
-    log = {"model_id": model_id, "quant": args.quant, "config": ft, "n_train_examples": len(train_ex),
+    log = {"model_id": model_id, "quant": args.quant, "recipe": args.recipe, "config": ft,
+           "n_train_examples": len(train_ex),
            "n_train_rag": int(sum(e.uses_rag for e in train_ex)), "n_val_loss_examples": len(val_ex),
            "total_optimizer_steps": total_steps, "trainable_params": n_train, "history": []}
     rng = np.random.default_rng(seed)
     order = []
     step, micro, best, t0 = 0, 0, float("inf"), time.time()
     model.train()
-    if not args.max_steps:
+    log_path = out_dir / f"train_log{'_' + args.tag if args.tag else ''}.json"
+    if select_by_generation:
+        log["selection"], log["selected"] = [], "zero_shot"
+        with model.disable_adapter():
+            res = generate_selection()
+        log["selection"].append({"candidate": "zero_shot", "step": 0, **res})
+        best = res["score"]
+        print(f"select zero_shot findings_f1 {res['findings_micro_f1']:.4f} macro {res['macro_f1_14']:.4f} "
+              f"distinct {res['distinct_ratio']:.2f}", flush=True)
+        log_path.write_text(json.dumps(log, indent=2))
+    if not args.max_steps or select_by_generation:
         log["history"].append({"step": 0, "val_loss": val_loss(), "elapsed_s": 0.0})
         print(f"step 0 val_loss {log['history'][-1]['val_loss']:.4f}", flush=True)
     running = 0.0
     while step < total_steps:
         if not order:
-            order = list(rng.permutation(len(train_ex)))
+            order = list(rng.permutation(len(train_ex)) if weights is None
+                         else rng.choice(len(train_ex), size=len(train_ex), replace=True, p=weights))
         ex = train_ex[order.pop()]
         b = batch_for(ex)
         with torch.autocast("cuda", dtype=torch.float16):
             loss = model(**b).loss / accum
         scaler.scale(loss).backward()
-        running += float(loss)
+        running += float(loss.detach())
         micro += 1
         if micro % accum:
             continue
@@ -196,21 +265,34 @@ def main():
             print(f"step {step}/{total_steps} train_loss {running / (10 if not args.max_steps else 1):.4f} "
                   f"lr {sched.get_last_lr()[0]:.2e} peak_mem {mem:.2f} GiB {time.time() - t0:.0f}s", flush=True)
             running = 0.0
-        if not args.max_steps and (step % ft["eval_every"] == 0 or step == total_steps):
+        if (not args.max_steps or select_by_generation) and (step % ft["eval_every"] == 0 or step == total_steps):
             vl = val_loss()
             log["history"].append({"step": step, "val_loss": vl, "elapsed_s": time.time() - t0})
             print(f"step {step} val_loss {vl:.4f}", flush=True)
-            if vl < best:
+            if select_by_generation:
+                res = generate_selection()
+                log["selection"].append({"candidate": f"step_{step}", "step": step, **res})
+                print(f"select step {step} findings_f1 {res['findings_micro_f1']:.4f} macro {res['macro_f1_14']:.4f} "
+                      f"distinct {res['distinct_ratio']:.2f} eligible {res['eligible']}", flush=True)
+                if res["score"] > best:
+                    best = res["score"]
+                    model.save_pretrained(adapter_dir)
+                    log["selected"] = step
+            elif vl < best:
                 best = vl
                 model.save_pretrained(adapter_dir)
                 log["best"] = {"step": step, "val_loss": vl}
-            (out_dir / f"train_log{'_' + args.tag if args.tag else ''}.json").write_text(json.dumps(log, indent=2))
-    if args.max_steps:
+            log_path.write_text(json.dumps(log, indent=2))
+    if select_by_generation:
+        log["finished"] = True
+        log_path.write_text(json.dumps(log, indent=2))
+        print(f"selected: {log['selected']}", flush=True)
+    elif args.max_steps:
         model.save_pretrained(adapter_dir)
         log["peak_mem_gib"] = torch.cuda.max_memory_allocated() / 2**30
         log["sec_per_step"] = (time.time() - t0) / step
         (out_dir / f"train_log{'_' + args.tag if args.tag else ''}.json").write_text(json.dumps(log, indent=2))
-    print(f"done; adapter at {adapter_dir}")
+    print(f"done; adapter dir {adapter_dir}")
 
 
 if __name__ == "__main__":

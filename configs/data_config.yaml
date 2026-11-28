@@ -17,6 +17,8 @@ paths:
   figures_dir: "reports/figures"
   audit_report_md: "reports/data_audit.md"
   data_card_md: "docs/data_card.md"
+  # External localization test set (DR-034): NIH ChestX-ray14 radiologist boxes, CC0, git-ignored
+  nih_bbox_dir: "data/external/nih_cxr14"
 
 view_policy:
   primary: "Frontal" # Options: Frontal, Frontal_Lateral

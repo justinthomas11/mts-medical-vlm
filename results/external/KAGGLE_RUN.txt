@@ -1,0 +1,1 @@
+a04d577ef362eb94748999ab0c93af86493b7a76 feat(models): add maira-2 as second base vlm with kaggle notebook (DR-035)

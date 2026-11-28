@@ -1,0 +1,81 @@
+{
+  "bootstrap": "images resampled, B=2000, seed 42",
+  "subsets": {
+    "all_boxes": {
+      "pointing_game": {
+        "gradcam_hidden": 0.27947154471544716,
+        "gradcam_tokens": 0.2571138211382114,
+        "center_prior": 0.21544715447154472,
+        "uniform_chance": 0.07643377490159939
+      },
+      "hidden_minus_center": {
+        "delta": 0.06402439024390244,
+        "ci95": [
+          0.028079460488904744,
+          0.09813532935138868
+        ],
+        "p_value": 0.0,
+        "n_boxes": 984,
+        "n_images": 880
+      },
+      "hidden_minus_tokens": {
+        "delta": 0.022357723577235755,
+        "ci95": [
+          -0.004032359786465281,
+          0.04853879989529493
+        ],
+        "p_value": 0.105,
+        "n_boxes": 984,
+        "n_images": 880
+      },
+      "hidden_minus_chance": {
+        "delta": 0.20303776981384777,
+        "ci95": [
+          0.17730118577975054,
+          0.22920027562613582
+        ],
+        "p_value": 0.0,
+        "n_boxes": 984,
+        "n_images": 880
+      }
+    },
+    "excluding_cardiomegaly": {
+      "pointing_game": {
+        "gradcam_hidden": 0.2732696897374702,
+        "gradcam_tokens": 0.2541766109785203,
+        "center_prior": 0.08353221957040573,
+        "uniform_chance": 0.05884368095306905
+      },
+      "hidden_minus_center": {
+        "delta": 0.18973747016706444,
+        "ci95": [
+          0.15895190337539095,
+          0.22195717997903328
+        ],
+        "p_value": 0.0,
+        "n_boxes": 838,
+        "n_images": 745
+      },
+      "hidden_minus_tokens": {
+        "delta": 0.01909307875894989,
+        "ci95": [
+          -0.009479801399232721,
+          0.045828685191196324
+        ],
+        "p_value": 0.196,
+        "n_boxes": 838,
+        "n_images": 745
+      },
+      "hidden_minus_chance": {
+        "delta": 0.21442600878440113,
+        "ci95": [
+          0.1861386309777596,
+          0.2429503103568912
+        ],
+        "p_value": 0.0,
+        "n_boxes": 838,
+        "n_images": 745
+      }
+    }
+  }
+}

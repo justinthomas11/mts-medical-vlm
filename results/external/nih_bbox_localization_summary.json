@@ -1,0 +1,578 @@
+{
+  "dataset": "NIH ChestX-ray14 BBox_List_2017 (CC0)",
+  "n_images": 880,
+  "n_missing_images": 0,
+  "label_mapping": {
+    "Cardiomegaly": "Cardiomegaly",
+    "Effusion": "Pleural Effusion",
+    "Atelectasis": "Atelectasis",
+    "Pneumothorax": "Pneumothorax",
+    "Pneumonia": "Pneumonia",
+    "Infiltrate": "Lung Opacity",
+    "Mass": "Lung Lesion",
+    "Nodule": "Lung Lesion"
+  },
+  "frame": 512,
+  "head": "IU-trained S2 head (train split only), unchanged",
+  "chance": "mean box area fraction (uniform heatmap)",
+  "methods": {
+    "center_prior": {
+      "all_boxes": {
+        "overall": {
+          "n": 984,
+          "pointing_game": 0.21544715447154472,
+          "pointing_game_ci95": [
+            0.1908913013732341,
+            0.2422161927837239
+          ],
+          "smr": 0.13114851347558346,
+          "chance_area_fraction": 0.07643377490159942
+        },
+        "Infiltrate": {
+          "n": 123,
+          "pointing_game": 0.22764227642276422,
+          "pointing_game_ci95": [
+            0.16245354051668648,
+            0.30932858774407335
+          ],
+          "smr": 0.17031396813522232,
+          "chance_area_fraction": 0.09784251887623857
+        },
+        "Atelectasis": {
+          "n": 180,
+          "pointing_game": 0.06111111111111111,
+          "pointing_game_ci95": [
+            0.034462356876136024,
+            0.10610212907263727
+          ],
+          "smr": 0.056398308883327204,
+          "chance_area_fraction": 0.032673750983344185
+        },
+        "Pneumonia": {
+          "n": 120,
+          "pointing_game": 0.14166666666666666,
+          "pointing_game_ci95": [
+            0.09036804031591959,
+            0.21519648727416324
+          ],
+          "smr": 0.1615026243712033,
+          "chance_area_fraction": 0.09539550145467122
+        },
+        "Cardiomegaly": {
+          "n": 146,
+          "pointing_game": 0.9726027397260274,
+          "pointing_game_ci95": [
+            0.9316770969839958,
+            0.9892954500256466
+          ],
+          "smr": 0.35114545811290954,
+          "chance_area_fraction": 0.17739609496234215
+        },
+        "Effusion": {
+          "n": 153,
+          "pointing_game": 0.026143790849673203,
+          "pointing_game_ci95": [
+            0.010212574388730519,
+            0.06528780306214987
+          ],
+          "smr": 0.08956736974440901,
+          "chance_area_fraction": 0.06967474744210836
+        },
+        "Pneumothorax": {
+          "n": 98,
+          "pointing_game": 0.01020408163265306,
+          "pointing_game_ci95": [
+            0.0018035013277367812,
+            0.055556163092303754
+          ],
+          "smr": 0.0656748527808497,
+          "chance_area_fraction": 0.05300412859235491
+        },
+        "Mass": {
+          "n": 85,
+          "pointing_game": 0.10588235294117647,
+          "pointing_game_ci95": [
+            0.056711765159551245,
+            0.18913702639755714
+          ],
+          "smr": 0.07655449408430831,
+          "chance_area_fraction": 0.04303799797506894
+        },
+        "Nodule": {
+          "n": 79,
+          "pointing_game": 0.0,
+          "pointing_game_ci95": [
+            -3.469446951953614e-18,
+            0.04637283683559951
+          ],
+          "smr": 0.008293628237083963,
+          "chance_area_fraction": 0.005503400971617879
+        }
+      },
+      "head_predicted_positive": {
+        "overall": {
+          "n": 642,
+          "pointing_game": 0.2819314641744548,
+          "pointing_game_ci95": [
+            0.24850288384704705,
+            0.3179542784045018
+          ],
+          "smr": 0.1616868301506846,
+          "chance_area_fraction": 0.09297270492601246
+        },
+        "Infiltrate": {
+          "n": 111,
+          "pointing_game": 0.25225225225225223,
+          "pointing_game_ci95": [
+            0.18067547191382155,
+            0.3404039975467223
+          ],
+          "smr": 0.1827351580996668,
+          "chance_area_fraction": 0.10505621282903997
+        },
+        "Atelectasis": {
+          "n": 73,
+          "pointing_game": 0.1232876712328767,
+          "pointing_game_ci95": [
+            0.06623676164045252,
+            0.21800510734717915
+          ],
+          "smr": 0.07503008108171877,
+          "chance_area_fraction": 0.04017670513832406
+        },
+        "Pneumonia": {
+          "n": 100,
+          "pointing_game": 0.17,
+          "pointing_game_ci95": [
+            0.10893476059773155,
+            0.25548181233642975
+          ],
+          "smr": 0.17790412907797296,
+          "chance_area_fraction": 0.1056757354736328
+        },
+        "Cardiomegaly": {
+          "n": 123,
+          "pointing_game": 0.975609756097561,
+          "pointing_game_ci95": [
+            0.9307392268204814,
+            0.9916710865152064
+          ],
+          "smr": 0.35231828035716284,
+          "chance_area_fraction": 0.1795344469023914
+        },
+        "Pneumothorax": {
+          "n": 78,
+          "pointing_game": 0.01282051282051282,
+          "pointing_game_ci95": [
+            0.0022666733888537863,
+            0.06911023028849367
+          ],
+          "smr": 0.07085851475087987,
+          "chance_area_fraction": 0.05601579715044071
+        },
+        "Mass": {
+          "n": 40,
+          "pointing_game": 0.05,
+          "pointing_game_ci95": [
+            0.013820377146101098,
+            0.165041708179252
+          ],
+          "smr": 0.07384219358195974,
+          "chance_area_fraction": 0.04420814514160156
+        },
+        "Effusion": {
+          "n": 72,
+          "pointing_game": 0.05555555555555555,
+          "pointing_game_ci95": [
+            0.02181386292692504,
+            0.13432208357209396
+          ],
+          "smr": 0.11251983037292487,
+          "chance_area_fraction": 0.08427376217312282
+        },
+        "Nodule": {
+          "n": 45,
+          "pointing_game": 0.0,
+          "pointing_game_ci95": [
+            0.0,
+            0.07865426194064076
+          ],
+          "smr": 0.00743345369522436,
+          "chance_area_fraction": 0.005305735270182291
+        }
+      }
+    },
+    "gradcam_hidden": {
+      "all_boxes": {
+        "overall": {
+          "n": 984,
+          "pointing_game": 0.27947154471544716,
+          "pointing_game_ci95": [
+            0.25233220962490666,
+            0.30832609834673586
+          ],
+          "smr": 0.11810956360566925,
+          "chance_area_fraction": 0.07643377490159942
+        },
+        "Infiltrate": {
+          "n": 123,
+          "pointing_game": 0.5284552845528455,
+          "pointing_game_ci95": [
+            0.44071500414036036,
+            0.6144719376831423
+          ],
+          "smr": 0.17691852893998347,
+          "chance_area_fraction": 0.09784251887623857
+        },
+        "Atelectasis": {
+          "n": 180,
+          "pointing_game": 0.17222222222222222,
+          "pointing_game_ci95": [
+            0.12406319680495356,
+            0.23407990029602901
+          ],
+          "smr": 0.04735989295780504,
+          "chance_area_fraction": 0.032673750983344185
+        },
+        "Pneumonia": {
+          "n": 120,
+          "pointing_game": 0.525,
+          "pointing_game_ci95": [
+            0.43626835924004914,
+            0.6121806272071544
+          ],
+          "smr": 0.2011484230713298,
+          "chance_area_fraction": 0.09539550145467122
+        },
+        "Cardiomegaly": {
+          "n": 146,
+          "pointing_game": 0.3150684931506849,
+          "pointing_game_ci95": [
+            0.2452770939862915,
+            0.3943423441403703
+          ],
+          "smr": 0.1865122232535114,
+          "chance_area_fraction": 0.17739609496234215
+        },
+        "Effusion": {
+          "n": 153,
+          "pointing_game": 0.2222222222222222,
+          "pointing_game_ci95": [
+            0.16360628328727117,
+            0.29444566211496903
+          ],
+          "smr": 0.10077975038743389,
+          "chance_area_fraction": 0.06967474744210836
+        },
+        "Pneumothorax": {
+          "n": 98,
+          "pointing_game": 0.12244897959183673,
+          "pointing_game_ci95": [
+            0.07145129752202053,
+            0.20193011046842743
+          ],
+          "smr": 0.05383858649927751,
+          "chance_area_fraction": 0.05300412859235491
+        },
+        "Mass": {
+          "n": 85,
+          "pointing_game": 0.2,
+          "pointing_game_ci95": [
+            0.12878892241565565,
+            0.29715568011288956
+          ],
+          "smr": 0.1395635989823324,
+          "chance_area_fraction": 0.04303799797506894
+        },
+        "Nodule": {
+          "n": 79,
+          "pointing_game": 0.08860759493670886,
+          "pointing_game_ci95": [
+            0.04358474184575353,
+            0.1717853137784739
+          ],
+          "smr": 0.025405901679475904,
+          "chance_area_fraction": 0.005503400971617879
+        }
+      },
+      "head_predicted_positive": {
+        "overall": {
+          "n": 642,
+          "pointing_game": 0.32710280373831774,
+          "pointing_game_ci95": [
+            0.2919332045427169,
+            0.3643292598138683
+          ],
+          "smr": 0.13932931893608896,
+          "chance_area_fraction": 0.09297270492601246
+        },
+        "Infiltrate": {
+          "n": 111,
+          "pointing_game": 0.5585585585585585,
+          "pointing_game_ci95": [
+            0.46575944163398997,
+            0.6474399564935177
+          ],
+          "smr": 0.18857657054422405,
+          "chance_area_fraction": 0.10505621282903997
+        },
+        "Atelectasis": {
+          "n": 73,
+          "pointing_game": 0.1917808219178082,
+          "pointing_game_ci95": [
+            0.1178225404547499,
+            0.29655717053513053
+          ],
+          "smr": 0.05898412662775141,
+          "chance_area_fraction": 0.04017670513832406
+        },
+        "Pneumonia": {
+          "n": 100,
+          "pointing_game": 0.56,
+          "pointing_game_ci95": [
+            0.4622792771125631,
+            0.6532813459903167
+          ],
+          "smr": 0.21503727918490767,
+          "chance_area_fraction": 0.1056757354736328
+        },
+        "Cardiomegaly": {
+          "n": 123,
+          "pointing_game": 0.34146341463414637,
+          "pointing_game_ci95": [
+            0.26360005517078905,
+            0.4289298403839817
+          ],
+          "smr": 0.1909885610022196,
+          "chance_area_fraction": 0.1795344469023914
+        },
+        "Pneumothorax": {
+          "n": 78,
+          "pointing_game": 0.11538461538461539,
+          "pointing_game_ci95": [
+            0.06190440604142225,
+            0.2049720968617468
+          ],
+          "smr": 0.05749842291884423,
+          "chance_area_fraction": 0.05601579715044071
+        },
+        "Mass": {
+          "n": 40,
+          "pointing_game": 0.125,
+          "pointing_game_ci95": [
+            0.05459419773541284,
+            0.26112420670238146
+          ],
+          "smr": 0.138440168753732,
+          "chance_area_fraction": 0.04420814514160156
+        },
+        "Effusion": {
+          "n": 72,
+          "pointing_game": 0.2638888888888889,
+          "pointing_game_ci95": [
+            0.17593641596552728,
+            0.37576080561207664
+          ],
+          "smr": 0.11328272779873158,
+          "chance_area_fraction": 0.08427376217312282
+        },
+        "Nodule": {
+          "n": 45,
+          "pointing_game": 0.06666666666666667,
+          "pointing_game_ci95": [
+            0.022931616462147086,
+            0.17856874388640825
+          ],
+          "smr": 0.02305380270317351,
+          "chance_area_fraction": 0.005305735270182291
+        }
+      }
+    },
+    "gradcam_tokens": {
+      "all_boxes": {
+        "overall": {
+          "n": 984,
+          "pointing_game": 0.2571138211382114,
+          "pointing_game_ci95": [
+            0.2307876366725628,
+            0.285329117268555
+          ],
+          "smr": 0.09607874313490068,
+          "chance_area_fraction": 0.07643377490159942
+        },
+        "Infiltrate": {
+          "n": 123,
+          "pointing_game": 0.5447154471544715,
+          "pointing_game_ci95": [
+            0.4566840359717431,
+            0.6300383011794753
+          ],
+          "smr": 0.14697130571490502,
+          "chance_area_fraction": 0.09784251887623857
+        },
+        "Atelectasis": {
+          "n": 180,
+          "pointing_game": 0.14444444444444443,
+          "pointing_game_ci95": [
+            0.10051698986574695,
+            0.2032314544471833
+          ],
+          "smr": 0.04295993050667069,
+          "chance_area_fraction": 0.032673750983344185
+        },
+        "Pneumonia": {
+          "n": 120,
+          "pointing_game": 0.48333333333333334,
+          "pointing_game_ci95": [
+            0.3958348942305447,
+            0.5718657814713197
+          ],
+          "smr": 0.15960864153069754,
+          "chance_area_fraction": 0.09539550145467122
+        },
+        "Cardiomegaly": {
+          "n": 146,
+          "pointing_game": 0.273972602739726,
+          "pointing_game_ci95": [
+            0.2081209105313925,
+            0.35141395829008304
+          ],
+          "smr": 0.16767855662189118,
+          "chance_area_fraction": 0.17739609496234215
+        },
+        "Effusion": {
+          "n": 153,
+          "pointing_game": 0.22875816993464052,
+          "pointing_game_ci95": [
+            0.16933009405883603,
+            0.3014735702751162
+          ],
+          "smr": 0.09391819416648811,
+          "chance_area_fraction": 0.06967474744210836
+        },
+        "Pneumothorax": {
+          "n": 98,
+          "pointing_game": 0.061224489795918366,
+          "pointing_game_ci95": [
+            0.028358937185437583,
+            0.1271924288575154
+          ],
+          "smr": 0.04627905368664758,
+          "chance_area_fraction": 0.05300412859235491
+        },
+        "Mass": {
+          "n": 85,
+          "pointing_game": 0.21176470588235294,
+          "pointing_game_ci95": [
+            0.13836125681504122,
+            0.3100953220849336
+          ],
+          "smr": 0.06295824611340375,
+          "chance_area_fraction": 0.04303799797506894
+        },
+        "Nodule": {
+          "n": 79,
+          "pointing_game": 0.0379746835443038,
+          "pointing_game_ci95": [
+            0.012997851302069409,
+            0.10580236501437063
+          ],
+          "smr": 0.010643506477530928,
+          "chance_area_fraction": 0.005503400971617879
+        }
+      },
+      "head_predicted_positive": {
+        "overall": {
+          "n": 642,
+          "pointing_game": 0.3161993769470405,
+          "pointing_game_ci95": [
+            0.28141368590380367,
+            0.3531716365653589
+          ],
+          "smr": 0.11889433604878166,
+          "chance_area_fraction": 0.09297270492601246
+        },
+        "Infiltrate": {
+          "n": 111,
+          "pointing_game": 0.5675675675675675,
+          "pointing_game_ci95": [
+            0.47466952682168206,
+            0.6559451633254423
+          ],
+          "smr": 0.1570948619806619,
+          "chance_area_fraction": 0.10505621282903997
+        },
+        "Atelectasis": {
+          "n": 73,
+          "pointing_game": 0.1917808219178082,
+          "pointing_game_ci95": [
+            0.1178225404547499,
+            0.29655717053513053
+          ],
+          "smr": 0.05654260761595701,
+          "chance_area_fraction": 0.04017670513832406
+        },
+        "Pneumonia": {
+          "n": 100,
+          "pointing_game": 0.54,
+          "pointing_game_ci95": [
+            0.44264685393523856,
+            0.6343935614666815
+          ],
+          "smr": 0.176677250508219,
+          "chance_area_fraction": 0.1056757354736328
+        },
+        "Cardiomegaly": {
+          "n": 123,
+          "pointing_game": 0.2926829268292683,
+          "pointing_game_ci95": [
+            0.21953047315444635,
+            0.37839323641717687
+          ],
+          "smr": 0.17542255984816124,
+          "chance_area_fraction": 0.1795344469023914
+        },
+        "Pneumothorax": {
+          "n": 78,
+          "pointing_game": 0.0641025641025641,
+          "pointing_game_ci95": [
+            0.027688907083923665,
+            0.14143779620633457
+          ],
+          "smr": 0.05003363341884091,
+          "chance_area_fraction": 0.05601579715044071
+        },
+        "Mass": {
+          "n": 40,
+          "pointing_game": 0.25,
+          "pointing_game_ci95": [
+            0.14186967895549518,
+            0.40194259066970106
+          ],
+          "smr": 0.07323320603463798,
+          "chance_area_fraction": 0.04420814514160156
+        },
+        "Effusion": {
+          "n": 72,
+          "pointing_game": 0.2777777777777778,
+          "pointing_game_ci95": [
+            0.18760146005322942,
+            0.3904665131962801
+          ],
+          "smr": 0.11366279761811408,
+          "chance_area_fraction": 0.08427376217312282
+        },
+        "Nodule": {
+          "n": 45,
+          "pointing_game": 0.022222222222222223,
+          "pointing_game_ci95": [
+            0.003933497522757505,
+            0.11566946388718813
+          ],
+          "smr": 0.011214460417654159,
+          "chance_area_fraction": 0.005305735270182291
+        }
+      }
+    }
+  }
+}

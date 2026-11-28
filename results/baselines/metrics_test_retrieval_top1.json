@@ -1,0 +1,150 @@
+{
+  "generations": "results\\baselines\\generations_test_retrieval_top1.jsonl",
+  "split": "test",
+  "n_reports": 734,
+  "empty_report_rate": 0.0,
+  "clinical": {
+    "n_reports": 734,
+    "micro_14": {
+      "precision": 0.2944369063772049,
+      "recall": 0.2672413793103448,
+      "f1": 0.2801807617817947
+    },
+    "macro_14": {
+      "precision": 0.14356884355934504,
+      "recall": 0.11234180971555228,
+      "f1": 0.12123240069406786
+    },
+    "micro_5": {
+      "precision": 0.1598173515981735,
+      "recall": 0.14893617021276595,
+      "f1": 0.15418502202643172
+    },
+    "macro_5": {
+      "precision": 0.12070668693009119,
+      "recall": 0.10209030100334449,
+      "f1": 0.10850254531077734
+    },
+    "example_f1_14": 0.30027572336836644,
+    "exact_match_14": 0.26294277929155313,
+    "per_label": {
+      "Enlarged Cardiomediastinum": {
+        "precision": 0.16666666666666666,
+        "recall": 0.09433962264150944,
+        "f1": 0.12048192771084337,
+        "support": 53,
+        "predicted_positive": 30
+      },
+      "Cardiomegaly": {
+        "precision": 0.14285714285714285,
+        "recall": 0.18269230769230768,
+        "f1": 0.16033755274261605,
+        "support": 104,
+        "predicted_positive": 133
+      },
+      "Lung Opacity": {
+        "precision": 0.3125,
+        "recall": 0.19607843137254902,
+        "f1": 0.24096385542168675,
+        "support": 102,
+        "predicted_positive": 64
+      },
+      "Lung Lesion": {
+        "precision": 0.10714285714285714,
+        "recall": 0.075,
+        "f1": 0.08823529411764706,
+        "support": 40,
+        "predicted_positive": 28
+      },
+      "Edema": {
+        "precision": 0.0625,
+        "recall": 0.038461538461538464,
+        "f1": 0.047619047619047616,
+        "support": 26,
+        "predicted_positive": 16
+      },
+      "Consolidation": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 10,
+        "predicted_positive": 2
+      },
+      "Pneumonia": {
+        "precision": 0.07142857142857142,
+        "recall": 0.03571428571428571,
+        "f1": 0.047619047619047616,
+        "support": 28,
+        "predicted_positive": 14
+      },
+      "Atelectasis": {
+        "precision": 0.2553191489361702,
+        "recall": 0.17391304347826086,
+        "f1": 0.20689655172413793,
+        "support": 69,
+        "predicted_positive": 47
+      },
+      "Pneumothorax": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 3,
+        "predicted_positive": 0
+      },
+      "Pleural Effusion": {
+        "precision": 0.14285714285714285,
+        "recall": 0.11538461538461539,
+        "f1": 0.1276595744680851,
+        "support": 26,
+        "predicted_positive": 21
+      },
+      "Pleural Other": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 13,
+        "predicted_positive": 7
+      },
+      "Fracture": {
+        "precision": 0.1111111111111111,
+        "recall": 0.047619047619047616,
+        "f1": 0.06666666666666667,
+        "support": 21,
+        "predicted_positive": 9
+      },
+      "Support Devices": {
+        "precision": 0.21428571428571427,
+        "recall": 0.08333333333333333,
+        "f1": 0.12,
+        "support": 36,
+        "predicted_positive": 14
+      },
+      "No Finding": {
+        "precision": 0.42329545454545453,
+        "recall": 0.5302491103202847,
+        "f1": 0.4707740916271722,
+        "support": 281,
+        "predicted_positive": 352
+      }
+    }
+  },
+  "hallucination_rate": 0.8233766233766234,
+  "ece": 0.10850525496302066,
+  "confidence_source": "none (confidence = 1.0)",
+  "lexical": {
+    "bleu_1": 0.3246139267831296,
+    "bleu_2": 0.2120695499886319,
+    "bleu_3": 0.1500482097933964,
+    "bleu_4": 0.11170476960830153,
+    "rouge_l": 0.31370700518890426
+  },
+  "latency_s_mean": 0.0,
+  "copy_overlap": {
+    "mean_4gram": 1.0,
+    "share_over_half_copied": 1.0
+  },
+  "radgraph": {
+    "radgraph_f1": 0.2735246887646181,
+    "reward_level": "partial"
+  }
+}

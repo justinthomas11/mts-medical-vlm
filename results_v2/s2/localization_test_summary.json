@@ -1,0 +1,138 @@
+{
+  "split": "test",
+  "n_patients_scanned": 734,
+  "target_definitions": {
+    "Cardiomegaly": "heart",
+    "Pleural Effusion": "costophrenic_lower_zone",
+    "Pneumothorax": "pleural_rim",
+    "Enlarged Cardiomediastinum": "mediastinum_aorta",
+    "Fracture": "bony_thorax"
+  },
+  "rim_fraction": 0.06,
+  "gradcam_layer": "head per-token hidden activations (24x24), = CAM",
+  "cam_layer": "hidden",
+  "all_positive_pairs": {
+    "overall": {
+      "n": 207,
+      "pointing_game": 0.2028985507246377,
+      "pointing_game_ci95": [
+        0.1537582973984552,
+        0.2628653670017391
+      ],
+      "smr": 0.10409080373474221,
+      "chance_area_fraction": 0.09878809095004906
+    },
+    "Enlarged Cardiomediastinum": {
+      "n": 53,
+      "pointing_game": 0.0,
+      "pointing_game_ci95": [
+        -6.938893903907228e-18,
+        0.06758430445307662
+      ],
+      "smr": 0.02164212823406143,
+      "chance_area_fraction": 0.04421277316111439
+    },
+    "Cardiomegaly": {
+      "n": 104,
+      "pointing_game": 0.11538461538461539,
+      "pointing_game_ci95": [
+        0.0672491122978073,
+        0.1909221314522854
+      ],
+      "smr": 0.07220448231181273,
+      "chance_area_fraction": 0.07555191333477314
+    },
+    "Pleural Effusion": {
+      "n": 26,
+      "pointing_game": 0.8461538461538461,
+      "pointing_game_ci95": [
+        0.6646841558168644,
+        0.9385006600107053
+      ],
+      "smr": 0.30016306099983364,
+      "chance_area_fraction": 0.19689149122971755
+    },
+    "Fracture": {
+      "n": 21,
+      "pointing_game": 0.38095238095238093,
+      "pointing_game_ci95": [
+        0.20750767797982506,
+        0.5912170418449848
+      ],
+      "smr": 0.23008533957458677,
+      "chance_area_fraction": 0.22189203898111978
+    },
+    "Pneumothorax": {
+      "n": 3,
+      "pointing_game": 0.0,
+      "pointing_game_ci95": [
+        0.0,
+        0.5615060804490177
+      ],
+      "smr": 0.08482189973195393,
+      "chance_area_fraction": 0.15651575724283853
+    }
+  },
+  "head_predicted_positive_pairs": {
+    "overall": {
+      "n": 109,
+      "pointing_game": 0.1743119266055046,
+      "pointing_game_ci95": [
+        0.11452781593206733,
+        0.2562716055578796
+      ],
+      "smr": 0.0990315550775908,
+      "chance_area_fraction": 0.09279027116408042
+    },
+    "Enlarged Cardiomediastinum": {
+      "n": 8,
+      "pointing_game": 0.0,
+      "pointing_game_ci95": [
+        0.0,
+        0.3244156195108769
+      ],
+      "smr": 0.024819480895530432,
+      "chance_area_fraction": 0.046607017517089844
+    },
+    "Cardiomegaly": {
+      "n": 84,
+      "pointing_game": 0.14285714285714285,
+      "pointing_game_ci95": [
+        0.08364938218850576,
+        0.23330295019159658
+      ],
+      "smr": 0.07426300800095002,
+      "chance_area_fraction": 0.07543827238537017
+    },
+    "Pleural Effusion": {
+      "n": 6,
+      "pointing_game": 0.5,
+      "pointing_game_ci95": [
+        0.18761280689940868,
+        0.8123871931005913
+      ],
+      "smr": 0.3072694043318431,
+      "chance_area_fraction": 0.18871180216471353
+    },
+    "Fracture": {
+      "n": 9,
+      "pointing_game": 0.4444444444444444,
+      "pointing_game_ci95": [
+        0.188775429471914,
+        0.7333526542559703
+      ],
+      "smr": 0.25472883880138397,
+      "chance_area_fraction": 0.21890301174587673
+    },
+    "Pneumothorax": {
+      "n": 2,
+      "pointing_game": 0.0,
+      "pointing_game_ci95": [
+        0.0,
+        0.6576280471103807
+      ],
+      "smr": 0.11080750450491905,
+      "chance_area_fraction": 0.15103530883789062
+    }
+  }
+}

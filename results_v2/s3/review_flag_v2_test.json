@@ -1,0 +1,11 @@
+{
+  "n": 734,
+  "flag_rate": 0.19754768392370572,
+  "example_f1_unflagged": 0.38030560271646857,
+  "example_f1_flagged": 0.2085057471264368,
+  "micro_f1_all": 0.33398310591293046,
+  "micro_f1_unflagged": 0.37656903765690375,
+  "aurc": 0.5739399079923447,
+  "full_coverage_risk": 0.6536330608537693,
+  "selected": "ridge_all_l2=100"
+}

@@ -1,0 +1,45 @@
+{
+  "split": "test",
+  "tag": "",
+  "n_patients": 734,
+  "n_boot": 2000,
+  "seed": 42,
+  "convention": "delta = later stage minus earlier stage",
+  "s1_minus_s0": {
+    "chexbert_micro_f1": {
+      "delta": -0.029535652172451188,
+      "ci95": [
+        -0.04553195660147574,
+        -0.014346266841472714
+      ],
+      "p_value": 0.002,
+      "n_boot": 2000
+    },
+    "hallucination_rate": {
+      "delta": null,
+      "ci95": null,
+      "p_value": null,
+      "n_boot": 0
+    },
+    "radgraph_f1": {
+      "delta": 0.009119352669669012,
+      "ci95": [
+        0.003735684502676194,
+        0.01467766303296742
+      ],
+      "p_value": 0.0,
+      "n_boot": 2000
+    }
+  },
+  "s3_minus_s1": {
+    "ece": {
+      "delta": -0.021759439470611097,
+      "ci95": [
+        -0.024562086414947476,
+        -0.01872323861424681
+      ],
+      "p_value": 0.0,
+      "n_boot": 2000
+    }
+  }
+}

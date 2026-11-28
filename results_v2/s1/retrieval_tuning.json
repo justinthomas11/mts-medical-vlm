@@ -1,0 +1,30 @@
+{
+  "index_split": "train",
+  "n_indexed": 2566,
+  "k": 3,
+  "selected_alpha": 0.5,
+  "selection_split": "val",
+  "objective": "mean example-based F1, CheXbert(query reference) vs CheXbert(retrieved train report)",
+  "grid": [
+    {
+      "alpha": 0.0,
+      "val_mean_example_f1": 0.2777062190996617
+    },
+    {
+      "alpha": 0.25,
+      "val_mean_example_f1": 0.3025645473732905
+    },
+    {
+      "alpha": 0.5,
+      "val_mean_example_f1": 0.30902217596206666
+    },
+    {
+      "alpha": 0.75,
+      "val_mean_example_f1": 0.30385694046896233
+    },
+    {
+      "alpha": 1.0,
+      "val_mean_example_f1": 0.2783076011218088
+    }
+  ]
+}

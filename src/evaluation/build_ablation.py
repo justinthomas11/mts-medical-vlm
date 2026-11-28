@@ -33,8 +33,14 @@ def stage_row(stage: str, m: Dict, loc: Optional[Dict], weights: Dict[str, Dict[
     if loc is not None:
         overall = loc["all_positive_pairs"]["overall"]
         pg, smr, chance = overall["pointing_game"], overall["smr"], overall["chance_area_fraction"]
+    hall = m["hallucination_rate"]
+    # Hallucination rate is undefined (NaN) when a stage asserts no positive finding at all. Then
+    # reliability and MTS are undefined too and are reported as missing, never filled in (DR-031).
+    undefined = hall is None or hall != hall
     comps = mts_components(m["clinical"]["micro_14"]["f1"], m["radgraph"]["radgraph_f1"], m["ece"],
-                           m["hallucination_rate"], pointing_game=pg, smr=smr, chance=chance)
+                           0.0 if undefined else hall, pointing_game=pg, smr=smr, chance=chance)
+    if undefined:
+        comps["reliability"] = float("nan")
     row = {
         "stage": stage, "n_reports": m["n_reports"],
         "bleu_1": m["lexical"]["bleu_1"], "bleu_4": m["lexical"]["bleu_4"], "rouge_l": m["lexical"]["rouge_l"],

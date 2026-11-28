@@ -60,6 +60,17 @@ def test_markdown_renders_missing_as_dash():
     assert md.splitlines()[2] == "| S0 | — | 0.1235 |"
 
 
+def test_no_asserted_findings_leaves_reliability_and_mts_undefined():
+    import math
+
+    t = build_table({"s0": _metrics(0.2, 0.1, 0.2, float("nan")), "s1": _metrics(0.3, 0.2, 0.15, 0.6)},
+                    None, WEIGHTS)
+    s0 = t.iloc[0]
+    assert math.isnan(s0["reliability"]) and math.isnan(s0["mts_primary"]) and math.isnan(s0["mts_equal"])
+    assert s0["diagnostic"] == pytest.approx(0.15)
+    assert not math.isnan(t.iloc[1]["mts_primary"])
+
+
 def test_missing_metric_is_an_error_not_a_default():
     bad = _metrics(0.2, 0.1, 0.2, 0.8)
     bad["radgraph"]["radgraph_f1"] = float("nan")

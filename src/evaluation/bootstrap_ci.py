@@ -41,6 +41,8 @@ def paired_bootstrap(metric: Callable[[np.ndarray], float], n: int, n_boot: int 
     observed = metric(np.arange(n))
     deltas = np.array([metric(rng.integers(0, n, n)) for _ in range(n_boot)])
     deltas = deltas[~np.isnan(deltas)]
+    if len(deltas) == 0:   # metric undefined for a stage (e.g. no asserted findings): report as missing
+        return {"delta": None, "ci95": None, "p_value": None, "n_boot": 0}
     lo, hi = np.percentile(deltas, [2.5, 97.5])
     p = 2 * min((deltas <= 0).mean(), (deltas >= 0).mean())
     return {"delta": float(observed), "ci95": [float(lo), float(hi)], "p_value": float(min(p, 1.0)),
@@ -125,6 +127,9 @@ def main():
         json.dump(out, f, indent=2)
     for comp in ("s1_minus_s0", "s3_minus_s1"):
         for metric, r in out.get(comp, {}).items():
+            if r["delta"] is None:
+                print(f"{comp:12s} {metric:20s} undefined (no asserted findings in one stage)")
+                continue
             print(f"{comp:12s} {metric:20s} delta={r['delta']:+.4f} CI95=[{r['ci95'][0]:+.4f}, {r['ci95'][1]:+.4f}] "
                   f"p={r['p_value']:.3f}")
     print(f"Saved {out_path}")

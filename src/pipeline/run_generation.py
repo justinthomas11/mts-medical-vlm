@@ -52,10 +52,14 @@ def main():
     parser.add_argument("--rag-layout", choices=list(RAG_LAYOUTS), default=None,
                         help="override rag.layout from the config (val comparisons only)")
     parser.add_argument("--adapter", default=None, help="LoRA adapter directory (Phase III, DR-030)")
+    parser.add_argument("--model", choices=["llava_med", "maira2"], default="llava_med",
+                        help="base VLM; maira2 = chest-specific comparison model, S0 only (DR-035)")
     parser.add_argument("--deadline", type=float, default=None,
                         help="unix time after which no new patient is started (Kaggle sessions; resume later)")
     args = parser.parse_args()
 
+    if args.model == "maira2" and (args.stage != "s0" or args.adapter):
+        raise SystemExit("MAIRA-2 runs as S0 only (frontal image + indication), without adapters (DR-035).")
     dcfg, ecfg = load_configs()
     seed = dcfg["project"]["seed"]
     set_seed(seed)
@@ -87,24 +91,29 @@ def main():
         print("Nothing to generate now" + (" (deadline reached)" if not todo.empty else "") + ".")
         return
 
-    from src.models.llava_med import LlavaMedGenerator
     import torch
     import transformers
 
     unc = ecfg["uncertainty"]
     template_id = ecfg["vlm"]["prompt_template_id"]
     layout = args.rag_layout or ecfg["rag"]["layout"]
-    gen = LlavaMedGenerator(ecfg["vlm"]["model_id"], quantization=args.quant,
-                            max_new_tokens=ecfg["vlm"]["max_new_tokens"], adapter_path=args.adapter)
+    if args.model == "maira2":
+        from src.models.maira2 import MAIRA2_ID, Maira2Generator, clean_indication
+        gen = Maira2Generator(MAIRA2_ID, max_new_tokens=ecfg["vlm"]["max_new_tokens"])
+    else:
+        from src.models.llava_med import LlavaMedGenerator
+        gen = LlavaMedGenerator(ecfg["vlm"]["model_id"], quantization=args.quant,
+                                max_new_tokens=ecfg["vlm"]["max_new_tokens"], adapter_path=args.adapter)
     run_config = {
         "stage": args.stage, "split": args.split, "n_patients": int(len(df)), "limit": args.limit,
-        "model_id": ecfg["vlm"]["model_id"], "quantization": args.quant, "adapter": args.adapter,
+        "model": args.model, "model_id": gen.model_id, "quantization": gen.quantization, "adapter": args.adapter,
         "decoding_greedy": {"do_sample": False, "num_beams": 1, "max_new_tokens": ecfg["vlm"]["max_new_tokens"]},
         "decoding_samples": ({"n": args.samples, "temperature": unc["temperature"], "top_p": unc["top_p"],
                               "top_k": 0, "seed": f"{seed} + uid"} if args.samples else None),
         "prompt_template_id": template_id, "prompt_template": PROMPT_TEMPLATES[template_id],
         "rag": ({"k": ecfg["rag"]["k"], "layout": layout, "header": RAG_HEADER} if args.stage == "s1" else None),
-        "image_preprocessing": "pad-to-square (CLIP mean colour) -> CLIPImageProcessor 336px",
+        "image_preprocessing": ("MAIRA-2 processor (grayscale frontal; no lateral, prior, technique or comparison)"
+                                if args.model == "maira2" else "pad-to-square (CLIP mean colour) -> CLIPImageProcessor 336px"),
         "torch": torch.__version__, "transformers": transformers.__version__,
         "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu",
         "platform": platform.platform(), "seed": seed,
@@ -126,7 +135,12 @@ def main():
                 context_uids = []
                 prompt = s0_prompt(query)
 
-            res = gen.generate(load_image(dcfg, row.primary_image_filename), prompt, n_samples=args.samples,
+            if args.model == "maira2":
+                prompt = f"[MAIRA-2 reporting input] indication={clean_indication(row.clean_indication)!r}"
+                model_input = clean_indication(row.clean_indication)
+            else:
+                model_input = prompt
+            res = gen.generate(load_image(dcfg, row.primary_image_filename), model_input, n_samples=args.samples,
                                temperature=unc["temperature"], top_p=unc["top_p"], seed=seed + int(row.uid))
             record = {"uid": int(row.uid), "stage": args.stage, "split": args.split, "prompt": prompt,
                       "retrieved_uids": context_uids, "generated_report": res.text, "n_tokens": res.n_tokens,
